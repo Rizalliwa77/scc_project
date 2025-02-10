@@ -1,0 +1,107 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap');
+
+body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Poppins', sans-serif;
+    overflow: hidden;
+}
+
+.prelogin-wrapper {
+    height: 100vh;
+    background: url('../../assets/media/raw page.png') no-repeat center center fixed;
+    background-size: cover;
+    position: relative;
+    overflow: hidden;
+}
+
+.logo-header {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.scc-logo {
+    height: 50px;
+    width: auto;
+}
+
+.logo-header h1 {
+    color: #000;
+    font-size: 24px;
+    margin: 0;
+}
+
+.prelogin-content {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 100%;
+    max-width: 600px;
+    padding: 0 20px;
+}
+
+.prelogin-card {
+    background-color: rgba(255, 255, 255, 0.95);
+    padding: 40px;
+    border-radius: 20px;
+    text-align: center;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+}
+
+.prelogin-title {
+    font-size: 2.5rem;
+    color: #333;
+    margin-bottom: 30px;
+}
+
+.prelogin-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.prelogin-button {
+    padding: 15px 0;
+    width: 100%;
+    font-size: 1.2rem;
+    background-color: #ffffff;
+    color: #333;
+    border: 1px solid #ddd;
+    border-radius: 30px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.prelogin-button:hover {
+    background-color: #f0f0f0;
+    transform: scale(1.02);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .logo-header h1 {
+        font-size: 20px;
+    }
+}
+
+.prelogin-signin {
+    margin-top: 20px;
+    text-align: center;
+    color: #fff;
+    font-size: 1rem;
+}
+
+.prelogin-signin a {
+    color: #ffcc00;
+    font-weight: bold;
+    text-decoration: underline;
+}
+
+.prelogin-signin a:hover {
+    color: #ffd700;
+}
