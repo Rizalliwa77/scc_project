@@ -104,6 +104,7 @@ function SignIn() {
                 formData.password
             );
 
+            // Store in the first document (existing)
             const signInRef = doc(db, "sign-in", "PEQz5kwuehQldRsByTrA");
             await setDoc(signInRef, {
                 [userCredential.user.uid]: {
@@ -116,6 +117,15 @@ function SignIn() {
                     role: formData.userType,
                     status: 'pending',
                     createdAt: new Date().toISOString()
+                }
+            }, { merge: true });
+
+            // Store in the second document
+            const userInfoRef = doc(db, "sign-in", "1qo1S53fQK4y4HT8GFrS");
+            await setDoc(userInfoRef, {
+                [userCredential.user.uid]: {
+                    fullName: formData.fullName,
+                    role: formData.userType
                 }
             }, { merge: true });
 
