@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { db, auth } from '../../firebase';
-import { collection, getDocs, addDoc, doc } from 'firebase/firestore';
-import TeacherSidebar from '../SideBar/tSideBar';
+import { db } from '../../firebase';
+import { collection, getDocs } from 'firebase/firestore';
+import TeacherSidebar from '../../components/SideBar/tSideBar'; // Fixed import path
 import WorkloadModal from './WorkloadModal';
 import './tWorkload.css';
 
@@ -19,7 +19,6 @@ function TeacherWorkload() {
 
     const fetchWorkloads = async () => {
         try {
-            // Get assignments
             const assignmentsSnapshot = await getDocs(collection(db, 'assignments'));
             const assignmentsData = assignmentsSnapshot.docs.map(doc => ({
                 id: doc.id,
@@ -27,7 +26,6 @@ function TeacherWorkload() {
                 type: 'assignment'
             }));
 
-            // Get projects
             const projectsSnapshot = await getDocs(collection(db, 'projects'));
             const projectsData = projectsSnapshot.docs.map(doc => ({
                 id: doc.id,
