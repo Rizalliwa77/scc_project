@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import TeacherSidebar from '../SideBar/tSideBar';
+import TeacherSidebar from '../SideBar/tSideBar'; // Fixed Import
 import './tMessages.css';
 
 function TeacherMessages() {
@@ -33,7 +33,6 @@ function TeacherMessages() {
                 { id: 2, sender: "teacher", content: "Yes, what about it?", time: "10:35 AM" }
             ]
         },
-        // Add more chats...
     ];
 
     const announcements = [
@@ -47,14 +46,11 @@ function TeacherMessages() {
             recipients: 45,
             views: 40
         },
-        // Add more announcements...
     ];
 
     const handleSendMessage = (e) => {
         e.preventDefault();
         if (!newMessage.trim()) return;
-
-        // Add message sending logic
         setNewMessage('');
     };
 
@@ -64,7 +60,7 @@ function TeacherMessages() {
 
     return (
         <div className="dashboard-layout">
-            <Sidebar />
+            <TeacherSidebar /> {/* Fixed Component Usage */}
             <div className="dashboard-wrapper">
                 <div className="messages-container">
                     <div className="messages-header">
@@ -148,11 +144,6 @@ function TeacherMessages() {
                                                     {selectedChat.student.class}
                                                 </span>
                                             </div>
-                                            <div className="chat-actions">
-                                                <button className="view-profile-btn">
-                                                    View Student Profile
-                                                </button>
-                                            </div>
                                         </div>
                                         <div className="messages-list">
                                             {selectedChat.messages.map(message => (
@@ -194,14 +185,6 @@ function TeacherMessages() {
                                     <div key={announcement.id} className="announcement-card">
                                         <div className="announcement-header">
                                             <h3>{announcement.title}</h3>
-                                            <div className="announcement-actions">
-                                                <button className="icon-btn">
-                                                    <span className="material-symbols-outlined">edit</span>
-                                                </button>
-                                                <button className="icon-btn delete">
-                                                    <span className="material-symbols-outlined">delete</span>
-                                                </button>
-                                            </div>
                                         </div>
                                         <p className="announcement-content">{announcement.content}</p>
                                         <div className="announcement-footer">
@@ -224,7 +207,6 @@ function TeacherMessages() {
                 </div>
             </div>
 
-            {/* New Announcement Modal */}
             {showNewAnnouncementModal && (
                 <AnnouncementModal onClose={() => setShowNewAnnouncementModal(false)} />
             )}
@@ -242,7 +224,6 @@ function AnnouncementModal({ onClose }) {
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        // Add announcement creation logic
         onClose();
     };
 

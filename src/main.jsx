@@ -17,7 +17,6 @@ import Messages from './components/Dashboard/Messages.jsx';
 import TeacherDashboard from './components/Teacher Dashboard/tDashboard.jsx';
 import TeacherWorkload from './components/Teacher Dashboard/tWorkload.jsx';
 import TeacherMessages from './components/Teacher Dashboard/tMessage.jsx';
-import TeacherCalendar from './components/Teacher Dashboard/tCalendar.jsx';
 
 // Protected Route wrapper component
 const ProtectedRoute = ({ children, allowedRole }) => {

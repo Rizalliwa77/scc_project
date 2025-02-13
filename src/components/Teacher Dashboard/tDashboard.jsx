@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { db, auth } from '../../firebase';
-import { collection, getDocs, addDoc, doc } from 'firebase/firestore';
-import TeacherSidebar from '../SideBar/tSideBar';
+import { collection, getDocs, addDoc } from 'firebase/firestore';
+import TeacherSidebar from '../SideBar/tSideBar'; // Fixed import
 import "./tDashboard.css";
 import WorkloadModal from './WorkloadModal';
 
@@ -22,7 +22,6 @@ const TeacherDashboard = () => {
     }
 
     try {
-      // Get workloads from teacher's user collection
       const workloadsRef = collection(db, 'users', auth.currentUser.uid, 'workloads');
       const workloadsSnapshot = await getDocs(workloadsRef);
       
@@ -58,60 +57,9 @@ const TeacherDashboard = () => {
     }
   };
 
-  const subjects = [
-    { 
-      name: "Grade 10 - TLE", 
-      color: "#E3F2FD", 
-      icon: "engineering",
-      studentsCount: 45,
-      submissionRate: "85%",
-      pendingGrades: 12
-    },
-    { 
-      name: "Grade 9 - TLE", 
-      color: "#E8F5E9", 
-      icon: "engineering",
-      studentsCount: 48,
-      submissionRate: "78%",
-      pendingGrades: 15
-    },
-    // Add more classes/sections as needed
-  ];
-
-  const teacherDeadlines = [
-    { 
-      date: "Jan 30, 2024", 
-      tasks: [
-        { 
-          name: "Grade Research Papers - Grade 10",
-          type: "Grading",
-          status: "Urgent",
-          subject: "TLE",
-          pendingCount: 15
-        },
-        { 
-          name: "Submit Quarter Grades",
-          type: "Administrative",
-          status: "Pending",
-          subject: "All Classes",
-          deadline: "Jan 31, 2024"
-        }
-      ]
-    },
-    // More deadlines...
-  ];
-
-  const handleCreateAssignment = () => {
-    // Implementation for creating new assignments
-  };
-
-  const handleGradeSubmissions = () => {
-    // Implementation for grading interface
-  };
-
   return (
     <div className="dashboard-container">
-      <SideBar />
+      <TeacherSidebar /> {/* Fixed component usage */}
       <div className="main-content">
         <div className="content-wrapper">
           <div className="header-section">
