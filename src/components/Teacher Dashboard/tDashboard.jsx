@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { db, auth } from '../../firebase';
 import { collection, getDocs, addDoc, doc } from 'firebase/firestore';
-import Sidebar from '../SideBar/tSideBar';
+import SideBar from '../SideBar/SideBar';
 import "./tDashboard.css";
 import WorkloadModal from './WorkloadModal';
 
@@ -111,7 +111,7 @@ const TeacherDashboard = () => {
 
   return (
     <div className="dashboard-container">
-      <Sidebar />
+      <SideBar />
       <div className="main-content">
         <div className="content-wrapper">
           <div className="header-section">
