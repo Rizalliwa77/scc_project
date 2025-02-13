@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { db, auth } from '../../firebase';
 import { collection, getDocs, addDoc, doc } from 'firebase/firestore';
-import Sidebar from '../SideBar/tSideBar';
+import tSideBar from '../SideBar/SideBar';
 import WorkloadModal from './WorkloadModal';
 import './tWorkload.css';
 
@@ -78,7 +78,7 @@ function TeacherWorkload() {
 
     return (
         <div className="dashboard-container">
-            <Sidebar />
+            <tSideBar />
             <div className="main-content">
                 <div className="content-wrapper">
                     <div className="header-section">
