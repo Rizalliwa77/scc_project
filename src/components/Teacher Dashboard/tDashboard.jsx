@@ -9,17 +9,19 @@ const TeacherDashboard = () => {
   const [workloads, setWorkloads] = useState([]);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     fetchWorkloads();
   }, []);
 
   const fetchWorkloads = async () => {
-    try {
-      if (!auth.currentUser) {
-        throw new Error('You must be logged in to view workloads');
-      }
+    if (!auth.currentUser) {
+      setError('You must be logged in to view workloads.');
+      return;
+    }
 
+    try {
       // Get workloads from teacher's user collection
       const workloadsRef = collection(db, 'users', auth.currentUser.uid, 'workloads');
       const workloadsSnapshot = await getDocs(workloadsRef);
