@@ -1,197 +1,224 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { db, auth } from '../../firebase';
+import { collection, getDocs, addDoc, query, where, doc, updateDoc } from 'firebase/firestore';
 import './Workloads.css';
 import Sidebar from '../SideBar/SideBar';
 
 function Workloads() {
-    const [selectedSubject, setSelectedSubject] = useState('All');
-    const [selectedTask, setSelectedTask] = useState(null);
+    const [workloads, setWorkloads] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+    const [selectedClass, setSelectedClass] = useState('all');
+    const [selectedWorkload, setSelectedWorkload] = useState(null);
 
-    const subjects = [
-        'All', 'TLE', 'Math', 'Science', 'English', 'Filipino', 'AP', 'ESP', 'MAPEH'
-    ];
+    useEffect(() => {
+        fetchWorkloads();
+    }, []);
 
-    const workloadCards = [
-        { 
-            id: 1, 
-            title: 'Research Paper: Sustainable Technology',
-            status: 'Ongoing',
-            subject: 'TLE',
-            dueDate: 'Jan 31, 2025 (FRIDAY)',
-            type: 'Project',
-            quarter: '3rd Quarter',
-            about: 'Research and write a comprehensive paper about sustainable technology solutions. The paper should include:\n\n1. Introduction to sustainable technology\n2. Current trends and innovations\n3. Impact on society and environment\n4. Future prospects and recommendations\n\nRequirements:\n- Minimum of 2000 words\n- APA format\n- At least 5 credible sources\n- Include diagrams and illustrations'
-        },
-        { 
-            id: 2, 
-            title: 'Mathematical Models in Real Life',
-            status: 'Ongoing',
-            subject: 'Math',
-            dueDate: 'Feb 5, 2024 (MONDAY)',
-            type: 'Project',
-            quarter: '3rd Quarter',
-            about: 'Create a portfolio of mathematical models found in everyday situations. Topics to cover:\n\n1. Linear equations in business\n2. Geometric patterns in architecture\n3. Statistical analysis of local data\n4. Probability in games\n\nDeliverables:\n- Digital presentation\n- Written analysis\n- Real-world examples\n- Practical applications'
-        },
-        { 
-            id: 3, 
-            title: 'Ecosystem Case Study',
-            status: 'Scheduled',
-            subject: 'Science',
-            dueDate: 'Feb 10, 2024 (SATURDAY)',
-            type: 'Research',
-            quarter: '3rd Quarter',
-            about: 'Conduct a detailed case study of a local ecosystem. The study should include:\n\n1. Biodiversity assessment\n2. Environmental factors analysis\n3. Human impact evaluation\n4. Conservation recommendations\n\nExpected Output:\n- Field research documentation\n- Photo documentation\n- Data analysis\n- Presentation of findings'
-        },
-        { 
-            id: 4, 
-            title: 'Literary Analysis Essay',
-            status: 'Completed',
-            subject: 'English',
-            dueDate: 'Feb 15, 2024 (THURSDAY)',
-            type: 'Essay',
-            quarter: '3rd Quarter',
-            about: 'Write an analytical essay on the assigned novel. Focus areas:\n\n1. Theme analysis\n2. Character development\n3. Literary devices used\n4. Historical context\n\nGuidelines:\n- 1500-2000 words\n- MLA format\n- Include textual evidence\n- Critical analysis of major themes'
-        },
-        { 
-            id: 5, 
-            title: 'Filipino Literature Review',
-            status: 'Ongoing',
-            subject: 'Filipino',
-            dueDate: 'Feb 20, 2024 (TUESDAY)',
-            type: 'Assignment',
-            quarter: '3rd Quarter',
-            about: 'Gumawa ng komprehensibong pagsusuri ng mga piling akdang pampanitikan:\n\n1. Maikling kuwento\n2. Tula\n3. Dula\n4. Nobela\n\nKinakailangan:\n- Pagsusuri ng tema\n- Pagtalakay ng mga tauhan\n- Kontekstong pangkasaysayan\n- Personal na interpretasyon'
-        },
-        { 
-            id: 6, 
-            title: 'Cultural Performance',
-            status: 'Scheduled',
-            subject: 'MAPEH',
-            dueDate: 'Feb 25, 2024 (SUNDAY)',
-            type: 'Performance',
-            quarter: '3rd Quarter',
-            about: 'Prepare and perform a cultural presentation. Requirements include:\n\n1. Traditional dance or music\n2. Historical background research\n3. Costume design\n4. Group choreography\n\nDeliverables:\n- Live performance\n- Written documentation\n- Cultural significance analysis\n- Practice documentation'
-        },
-        { 
-            id: 7, 
-            title: 'Historical Site Analysis',
-            status: 'Scheduled',
-            subject: 'AP',
-            dueDate: 'Mar 1, 2024 (FRIDAY)',
-            type: 'Research',
-            quarter: '3rd Quarter',
-            about: 'Conduct a comprehensive analysis of a local historical site:\n\n1. Historical significance\n2. Cultural impact\n3. Present condition\n4. Preservation efforts\n\nRequired outputs:\n- Documentary video\n- Written report\n- Photo documentation\n- Interviews with local historians'
-        },
-        { 
-            id: 8, 
-            title: 'Values Formation Project',
-            status: 'Scheduled',
-            subject: 'ESP',
-            dueDate: 'Mar 5, 2024 (TUESDAY)',
-            type: 'Project',
-            quarter: '3rd Quarter',
-            about: 'Develop and implement a community values formation project:\n\n1. Needs assessment\n2. Program development\n3. Implementation strategy\n4. Impact evaluation\n\nDeliverables:\n- Project proposal\n- Implementation documentation\n- Reflection paper\n- Community feedback report'
+    const fetchWorkloads = async () => {
+        setLoading(true);
+        setError(null);
+        try {
+            console.log('Fetching workloads...');
+            
+            // Get assignments
+            const assignmentsRef = collection(db, 'assignments');
+            const assignmentsSnap = await getDocs(assignmentsRef);
+            const assignmentsData = assignmentsSnap.docs.map(doc => ({
+                id: doc.id,
+                ...doc.data(),
+                type: 'assignment'
+            }));
+
+            // Get projects
+            const projectsRef = collection(db, 'projects');
+            const projectsSnap = await getDocs(projectsRef);
+            const projectsData = projectsSnap.docs.map(doc => ({
+                id: doc.id,
+                ...doc.data(),
+                type: 'project'
+            }));
+
+            const allWorkloads = [...assignmentsData, ...projectsData]
+                .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+            
+            console.log('All workloads:', allWorkloads);
+            setWorkloads(allWorkloads);
+        } catch (err) {
+            console.error("Error fetching workloads:", err);
+            setError('Failed to load workloads. Please try again later.');
+        } finally {
+            setLoading(false);
         }
-    ];
-
-    const handleSubjectChange = (event) => {
-        setSelectedSubject(event.target.value);
     };
 
-    const handleTaskClick = (task) => {
-        setSelectedTask(task);
+    const handleSubmit = async (workloadId) => {
+        if (!auth.currentUser) {
+            alert('You must be logged in to submit a workload.');
+            return;
+        }
+
+        try {
+            // Check for existing submission
+            const submissionsRef = collection(db, 'submissions');
+            const q = query(submissionsRef, where('workloadId', '==', workloadId), where('studentId', '==', auth.currentUser.uid));
+            const existingSubmissions = await getDocs(q);
+
+            if (!existingSubmissions.empty) {
+                alert('You have already submitted this workload.');
+                return;
+            }
+
+            // Submit the workload
+            const newSubmission = {
+                workloadId,
+                studentId: auth.currentUser.uid,
+                submittedAt: new Date().toISOString(),
+            };
+
+            await addDoc(submissionsRef, newSubmission);
+            alert('Workload submitted successfully!');
+        } catch (error) {
+            console.error("Error submitting workload:", error);
+            alert('Failed to submit workload. Please try again.');
+        }
     };
 
-    const handleCloseModal = () => {
-        setSelectedTask(null);
+    const handleMarkAsSubmitted = async (workloadId) => {
+        if (!auth.currentUser) {
+            alert('You must be logged in to mark a workload as submitted.');
+            return;
+        }
+
+        try {
+            // Logic to mark the workload as submitted
+            // This could involve updating a field in the database
+            const workloadRef = doc(db, 'assignments', workloadId); // or 'projects' based on your structure
+            await updateDoc(workloadRef, { status: 'submitted' });
+            alert('Workload marked as submitted successfully!');
+            fetchWorkloads(); // Refresh the workloads to reflect the change
+        } catch (error) {
+            console.error("Error marking workload as submitted:", error);
+            alert('Failed to mark workload as submitted. Please try again.');
+        }
     };
 
-    // Filter workloads based on selected subject
-    const filteredWorkloads = selectedSubject === 'All' 
-        ? workloadCards 
-        : workloadCards.filter(card => card.subject === selectedSubject);
+    const handleWorkloadClick = (workload) => {
+        setSelectedWorkload(workload);
+    };
+
+    const filteredWorkloads = selectedClass === 'all'
+        ? workloads
+        : workloads.filter(workload => workload.class === selectedClass);
+
+    if (error) {
+        return (
+            <div className="workload-container">
+                <Sidebar />
+                <div className="main-content">
+                    <div className="error-message">
+                        {error}
+                        <button onClick={fetchWorkloads} className="retry-button">
+                            Retry
+                        </button>
+                    </div>
+                </div>
+            </div>
+        );
+    }
 
     return (
-        <div className="dashboard-layout">
+        <div className="workload-container">
             <Sidebar />
-            <div className="dashboard-wrapper">
-                <div className="dashboard-header">
-                    <div className="header-left">
-                        <h1>WORKLOADS</h1>
-                        <p className="semester-info">1st Semester AY 2023-2024</p>
-                    </div>
-                    <div className="header-right">
-                        <div className="section-dropdown">
-                            <span className="material-symbols-outlined">school</span>
-                            <select 
-                                value={selectedSubject} 
-                                onChange={handleSubjectChange}
-                                className="subject-select"
-                            >
-                                {subjects.map((subject) => (
-                                    <option key={subject} value={subject}>
-                                        {subject}
-                                    </option>
-                                ))}
-                            </select>
-                        </div>
+            <div className="main-content">
+                <div className="workload-header">
+                    <h1>Workloads</h1>
+                    <div className="header-controls">
+                        <select
+                            value={selectedClass}
+                            onChange={(e) => setSelectedClass(e.target.value)}
+                            className="class-filter"
+                        >
+                            <option value="all">All Classes</option>
+                            <option value="Grade 10 - STA">Grade 10 - STA</option>
+                            <option value="Grade 10 - STB">Grade 10 - STB</option>
+                            <option value="Grade 9 - SVF">Grade 9 - SVF</option>
+                            <option value="Grade 9 - SHP">Grade 9 - SHP</option>
+                        </select>
+                        <button onClick={fetchWorkloads} className="refresh-button">
+                            <span className="material-symbols-outlined">refresh</span>
+                        </button>
                     </div>
                 </div>
 
-                <div className="dashboard-content">
+                {loading ? (
+                    <div className="loading">
+                        <div className="loading-spinner"></div>
+                        <p>Loading workloads...</p>
+                    </div>
+                ) : filteredWorkloads.length === 0 ? (
+                    <div className="no-workloads">
+                        <p>No workloads available for the selected class.</p>
+                    </div>
+                ) : (
                     <div className="workloads-grid">
-                        {filteredWorkloads.map((card) => (
-                            <div 
-                                key={card.id} 
-                                className="workload-card"
-                                onClick={() => handleTaskClick(card)}
-                            >
-                                <div className="card-header">
-                                    <span className="subject-tag">{card.subject}</span>
-                                    <span className={`status-badge ${card.status.toLowerCase()}`}>
-                                        {card.status}
+                        {filteredWorkloads.map(workload => (
+                            <div key={workload.id} className="workload-card" onClick={() => handleWorkloadClick(workload)}>
+                                <div className="workload-header">
+                                    <h3>{workload.title}</h3>
+                                    <span className={`status ${workload.status?.toLowerCase() || 'active'}`}>
+                                        {workload.status || 'Active'}
                                     </span>
                                 </div>
-                                <div className="card-content">
-                                    <h3>{card.title}</h3>
-                                    <p>Due: {card.dueDate}</p>
-                                </div>
-                                <div className="card-footer">
-                                    <span className="due-date">
-                                        <span className="material-symbols-outlined">calendar_today</span>
-                                        {card.type}
-                                    </span>
+                                <div className="workload-content">
+                                    <p className="description">{workload.description}</p>
+                                    <div className="workload-details">
+                                        <span className="class">{workload.class}</span>
+                                        <span className="type">{workload.type}</span>
+                                        <span className="points">{workload.points} points</span>
+                                    </div>
+                                    <div className="due-date">
+                                        Due: {new Date(workload.dueDate).toLocaleDateString()}
+                                    </div>
                                 </div>
                             </div>
                         ))}
                     </div>
-                </div>
-            </div>
+                )}
 
-            {/* Task Detail Modal */}
-            {selectedTask && (
-                <div className="task-modal-overlay" onClick={handleCloseModal}>
-                    <div className="task-modal" onClick={e => e.stopPropagation()}>
-                        <div className="task-modal-header">
-                            <h2>{selectedTask.title}</h2>
-                            <div className="task-tags">
-                                <span className="task-tag">{selectedTask.type}</span>
-                                <span className="task-tag">{selectedTask.quarter}</span>
-                            </div>
-                            <div className="task-deadline">
-                                DEADLINE: {selectedTask.dueDate}
-                            </div>
+                {selectedWorkload && (
+                    <div className="workload-details-modal">
+                        <h2>{selectedWorkload.title}</h2>
+                        <p>{selectedWorkload.description}</p>
+                        <div className="workload-details">
+                            <span className="class">{selectedWorkload.class}</span>
+                            <span className="type">{selectedWorkload.type}</span>
+                            <span className="points">{selectedWorkload.points} points</span>
                         </div>
-                        <div className="task-modal-content">
-                            <h3>ABOUT:</h3>
-                            <p>{selectedTask.about}</p>
-                            <h3>STATUS:</h3>
-                            <div className={`status-badge ${selectedTask.status.toLowerCase()}`}>
-                                {selectedTask.status}
-                            </div>
+                        <div className="due-date">
+                            Due: {new Date(selectedWorkload.dueDate).toLocaleDateString()}
                         </div>
+                        <button 
+                            className="submit-button"
+                            onClick={() => handleSubmit(selectedWorkload.id)}
+                        >
+                            Submit Work
+                        </button>
+                        <button 
+                            className="mark-submitted-button"
+                            onClick={() => handleMarkAsSubmitted(selectedWorkload.id)}
+                        >
+                            Mark as Submitted
+                        </button>
+                        <button 
+                            className="close-button"
+                            onClick={() => setSelectedWorkload(null)}
+                        >
+                            Close
+                        </button>
                     </div>
-                </div>
-            )}
+                )}
+            </div>
         </div>
     );
 }
