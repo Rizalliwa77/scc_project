@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import Sidebar from '../SideBar/tSideBar';
+import TeacherSidebar from '../SideBar/tSideBar';
 import './tMessages.css';
 
 function TeacherMessages() {
