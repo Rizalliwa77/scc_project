@@ -77,12 +77,6 @@ function Main() {
             <TeacherMessages />
           </ProtectedRoute>
         } />
-        <Route path="/teacher/calendar" element={
-          <ProtectedRoute allowedRole="teacher">
-            <TeacherCalendar />
-          </ProtectedRoute>
-        } />
-
         {/* Catch all route - redirect based on role */}
         <Route path="*" element={
           <ProtectedRoute>

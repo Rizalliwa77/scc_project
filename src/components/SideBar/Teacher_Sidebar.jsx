@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import './tSidebar.css';
+import './Teacher_Sidebar.css';
 import logo from '../../assets/media/SCC.png';
 import { getAuth, signOut } from 'firebase/auth';
 
-const TeacherSidebar = () => {
+const Teacher_Sidebar = () => {
     const location = useLocation();
     const navigate = useNavigate();
     const [showLogoutModal, setShowLogoutModal] = useState(false);
@@ -149,4 +149,4 @@ const TeacherSidebar = () => {
     );
 };
 
-export default TeacherSidebar;
+export default Teacher_Sidebar;

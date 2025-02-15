@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import TeacherSidebar from '../SideBar/tSideBar'; // Fixed Import
+import TeacherSidebar from '../SideBar/Teacher_Sidebar';
 import './tMessages.css';
 
 function TeacherMessages() {

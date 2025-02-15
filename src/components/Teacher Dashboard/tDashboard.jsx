@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { db, auth } from '../../firebase';
 import { collection, getDocs, addDoc } from 'firebase/firestore';
-import TeacherSidebar from '../SideBar/tSideBar'; // Fixed import
+import TeacherSidebar from '../SideBar/Teacher_Sidebar';
 import "./tDashboard.css";
 import WorkloadModal from './WorkloadModal';
 
