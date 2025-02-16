@@ -183,8 +183,6 @@ function SignIn() {
                                     required 
                                 />
                             </div>
-                        </div>
-                        <div className="form-row">
                             <div className="form-group">
                                 <input 
                                     type="text" 
@@ -210,8 +208,6 @@ function SignIn() {
                                     <option value="teacher">Teacher</option>
                                 </select>
                             </div>
-                        </div>
-                        <div className="form-row">
                             <div className="form-group">
                                 <input 
                                     type="email" 

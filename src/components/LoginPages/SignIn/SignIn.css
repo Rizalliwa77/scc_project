@@ -19,7 +19,7 @@ body {
     transform: translate(-50%, -50%);
     width: 100%;
     max-width: 650px;
-    padding: 0 20px;
+    padding: 0 10px;
 }
 
 .signin-card {
@@ -41,7 +41,7 @@ body {
 .signin-form {
     display: flex;
     flex-direction: column;
-    gap: 15px;
+    gap: 1px;
     width: 100%;
     margin: 0 auto;
 }
