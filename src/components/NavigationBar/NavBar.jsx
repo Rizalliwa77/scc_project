@@ -1,11 +1,12 @@
 import "./NavBar.css";
+import SCCLogo from '../../assets/media/SCC.png';
 
 const NavBar = () => {
     return (
       <nav className="navbar">
         <div className="nav-content">
           <div className="logo-section">
-            <img src="./src/assets/media/SCC.png" alt="SCC Logo" className="logo" />
+            <img src={SCCLogo} alt="SCC Logo" className="logo" />
             <h1 className="title">ST. CATHERINE'S COLLEGE</h1>
           </div>
           <ul className="nav-links">
