@@ -18,12 +18,12 @@
 .logo-section {
     display: flex;
     align-items: center;
-    gap: 15px;
+    gap: 8px; /* Reduced from 15px to bring logo and text closer together */
     justify-content: flex-start; /* Aligns logo to the left */
 }
 
 .logo {
-    width: 40px; /* Adjusted logo size */
+    width: 50px; /* Adjusted logo size down from 80px */
     height: auto;
 }
 
