@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { auth, db } from '../../../firebase';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { doc, setDoc } from 'firebase/firestore';
+import backgroundImage from '../../../assets/media/raw page.png';
 
 function SignIn() {
     const [formData, setFormData] = useState({
@@ -165,7 +166,7 @@ function SignIn() {
     };
 
     return (
-        <div className="signin-wrapper">
+        <div className="signin-wrapper" style={{ backgroundImage: `url(${backgroundImage})` }}>
             <NavBar />
             <div className="signin-content">
                 <div className="signin-card">

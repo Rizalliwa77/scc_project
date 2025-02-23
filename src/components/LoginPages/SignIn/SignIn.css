@@ -6,7 +6,8 @@ body {
 
 .signin-wrapper {
     height: 100vh;
-    background: url('src/assets/media/raw page.png') no-repeat center center fixed;
+    background-repeat: no-repeat;
+    background-position: center center;
     background-size: cover;
     position: relative;
     overflow: hidden;
