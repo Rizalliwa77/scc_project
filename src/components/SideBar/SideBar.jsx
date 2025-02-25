@@ -9,6 +9,7 @@ const Sidebar = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [userInfo, setUserInfo] = useState({ name: 'Unknown User', role: 'No Role' });
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
 
   useEffect(() => {
     const auth = getAuth();
@@ -57,62 +58,94 @@ const Sidebar = () => {
     return () => unsubscribe(); // Cleanup on unmount
   }, []);
 
-  const handleLogout = async () => {
-    if (window.confirm('Are you sure you want to log out?')) {
-      const auth = getAuth();
+  const handleLogoutClick = () => {
+    setShowLogoutModal(true);
+  };
+
+  const handleLogoutConfirm = async () => {
+    const auth = getAuth();
+    try {
       await signOut(auth);
-      navigate('/');
+      sessionStorage.removeItem('isAuthenticated');
+      sessionStorage.removeItem('userRole');
+      navigate('/prelogin');
+    } catch (error) {
+      console.error('Error signing out:', error);
     }
   };
 
+  const handleLogoutCancel = () => {
+    setShowLogoutModal(false);
+  };
+
   return (
-    <div className="sidebar">
-      <div className="sidebar-header">
-        <img src={logo} alt="SCC Logo" className="sidebar-logo" />
-        <h1>ST. CATHERINE'S<br />COLLEGE</h1>
-      </div>
+    <>
+      <div className="sidebar">
+        <div className="sidebar-header">
+          <img src={logo} alt="SCC Logo" className="sidebar-logo" />
+          <h1>ST. CATHERINE'S<br />COLLEGE</h1>
+        </div>
 
-      <div className="sidebar-menu">
-        <Link 
-          to="/dashboard" 
-          className={`menu-item ${location.pathname === '/dashboard' ? 'active' : ''}`}
-        >
-          <span className="material-symbols-outlined">dashboard</span>
-          DASHBOARD
-        </Link>
-        <Link 
-          to="/workloads" 
-          className={`menu-item ${location.pathname === '/workloads' ? 'active' : ''}`}
-        >
-          <span className="material-symbols-outlined">assignment</span>
-          WORKLOADS
-        </Link>
-        <Link 
-          to="/messages" 
-          className={`menu-item ${location.pathname === '/messages' ? 'active' : ''}`}
-        >
-          <span className="material-symbols-outlined">chat</span>
-          MESSAGES
-        </Link>
-      </div>
+        <div className="sidebar-menu">
+          <Link 
+            to="/dashboard" 
+            className={`menu-item ${location.pathname === '/dashboard' ? 'active' : ''}`}
+          >
+            <span className="material-symbols-outlined">dashboard</span>
+            DASHBOARD
+          </Link>
+          <Link 
+            to="/workloads" 
+            className={`menu-item ${location.pathname === '/workloads' ? 'active' : ''}`}
+          >
+            <span className="material-symbols-outlined">assignment</span>
+            WORKLOADS
+          </Link>
+          <Link 
+            to="/messages" 
+            className={`menu-item ${location.pathname === '/messages' ? 'active' : ''}`}
+          >
+            <span className="material-symbols-outlined">chat</span>
+            MESSAGES
+          </Link>
+        </div>
 
-      <div className="sidebar-footer">
-        <button className="logout-button" onClick={handleLogout}>
-          <span className="material-symbols-outlined">logout</span>
-          LOG OUT
-        </button>
-
-        <div className="user-profile">
-          <div className="avatar">
-            <span className="material-symbols-outlined">account_circle</span>
-          </div>
-          <div className="user-info">
-            <span className="user-type">{userInfo.name}</span>
-            <span className="user-grade">{userInfo.role}</span>
-          </div>
+        <div className="sidebar-footer">
+          <button className="logout-button" onClick={handleLogoutClick}>
+            <span className="material-symbols-outlined">logout</span>
+            LOG OUT
+          </button>
         </div>
       </div>
-    </div>
+
+      {/* Logout Confirmation Modal */}
+      {showLogoutModal && (
+        <div className="modal-overlay">
+          <div className="logout-modal">
+            <div className="modal-header">
+              <h2>Confirm Logout</h2>
+            </div>
+            <div className="modal-content">
+              <p>Are you sure you want to log out?</p>
+            </div>
+            <div className="modal-actions">
+              <button 
+                className="cancel-button"
+                onClick={handleLogoutCancel}
+              >
+                Cancel
+              </button>
+              <button 
+                className="confirm-button"
+                onClick={handleLogoutConfirm}
+              >
+                Logout
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 };
 

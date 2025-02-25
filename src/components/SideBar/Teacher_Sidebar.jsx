@@ -9,7 +9,7 @@ const Teacher_Sidebar = () => {
     const navigate = useNavigate();
     const [showLogoutModal, setShowLogoutModal] = useState(false);
 
-    // Menu items for teacher navigation
+    // Updated menu items without calendar and grades
     const menuItems = [
         {
             path: '/teacher/dashboard',
@@ -27,18 +27,6 @@ const Teacher_Sidebar = () => {
             path: '/teacher/messages',
             icon: 'message',
             label: 'Messages',
-            notifications: 0
-        },
-        {
-            path: '/teacher/grades',
-            icon: 'grade',
-            label: 'Grades',
-            notifications: 0
-        },
-        {
-            path: '/teacher/calendar',
-            icon: 'calendar_month',
-            label: 'Calendar',
             notifications: 0
         }
     ];
@@ -95,25 +83,9 @@ const Teacher_Sidebar = () => {
                 </nav>
 
                 <div className="sidebar-footer">
-                    <div className="user-profile">
-                        <div className="avatar">
-                            <span className="material-symbols-outlined">
-                                person
-                            </span>
-                        </div>
-                        <div className="user-info">
-                            <span className="user-name">{teacherData.name}</span>
-                            <span className="user-type">Teacher</span>
-                            <span className="user-department">{teacherData.department}</span>
-                            <span className="class-count">
-                                {teacherData.classes.length} Classes
-                            </span>
-                        </div>
-                    </div>
-
                     <button className="logout-button" onClick={handleLogoutClick}>
                         <span className="material-symbols-outlined">logout</span>
-                        <span>Logout</span>
+                        <span>LOG OUT</span>
                     </button>
                 </div>
             </div>

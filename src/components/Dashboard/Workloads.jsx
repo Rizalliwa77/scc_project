@@ -10,6 +10,8 @@ function Workloads() {
     const [error, setError] = useState(null);
     const [selectedClass, setSelectedClass] = useState('all');
     const [selectedWorkload, setSelectedWorkload] = useState(null);
+    const [file, setFile] = useState(null);
+    const [uploading, setUploading] = useState(false);
 
     useEffect(() => {
         fetchWorkloads();
@@ -27,7 +29,7 @@ function Workloads() {
             const assignmentsData = assignmentsSnap.docs.map(doc => ({
                 id: doc.id,
                 ...doc.data(),
-                type: 'assignment'
+                type: 'Assignment'
             }));
 
             // Get projects
@@ -36,7 +38,7 @@ function Workloads() {
             const projectsData = projectsSnap.docs.map(doc => ({
                 id: doc.id,
                 ...doc.data(),
-                type: 'project'
+                type: 'Project'
             }));
 
             const allWorkloads = [...assignmentsData, ...projectsData]
@@ -52,16 +54,31 @@ function Workloads() {
         }
     };
 
+    const handleFileChange = (e) => {
+        const selectedFile = e.target.files[0];
+        setFile(selectedFile);
+    };
+
     const handleSubmit = async (workloadId) => {
         if (!auth.currentUser) {
             alert('You must be logged in to submit a workload.');
             return;
         }
 
+        if (!file) {
+            alert('Please select a file to upload.');
+            return;
+        }
+
+        setUploading(true);
+
         try {
             // Check for existing submission
             const submissionsRef = collection(db, 'submissions');
-            const q = query(submissionsRef, where('workloadId', '==', workloadId), where('studentId', '==', auth.currentUser.uid));
+            const q = query(submissionsRef, 
+                where('workloadId', '==', workloadId), 
+                where('studentId', '==', auth.currentUser.uid)
+            );
             const existingSubmissions = await getDocs(q);
 
             if (!existingSubmissions.empty) {
@@ -69,18 +86,25 @@ function Workloads() {
                 return;
             }
 
-            // Submit the workload
+            // Submit the workload without file storage
             const newSubmission = {
                 workloadId,
                 studentId: auth.currentUser.uid,
+                studentEmail: auth.currentUser.email,
+                fileName: file.name,
                 submittedAt: new Date().toISOString(),
+                status: 'Submitted'
             };
 
             await addDoc(submissionsRef, newSubmission);
             alert('Workload submitted successfully!');
+            setSelectedWorkload(null);
+            setFile(null);
         } catch (error) {
             console.error("Error submitting workload:", error);
             alert('Failed to submit workload. Please try again.');
+        } finally {
+            setUploading(false);
         }
     };
 
@@ -105,11 +129,113 @@ function Workloads() {
 
     const handleWorkloadClick = (workload) => {
         setSelectedWorkload(workload);
+        setFile(null); // Reset file selection when opening new workload
     };
 
     const filteredWorkloads = selectedClass === 'all'
         ? workloads
         : workloads.filter(workload => workload.class === selectedClass);
+
+    const renderWorkloadCard = (workload) => (
+        <div className="workload-card" onClick={() => handleWorkloadClick(workload)}>
+            <div className="workload-card-header">
+                <span className="workload-subject">{workload.subject}</span>
+                <span className={`status-badge ${workload.status?.toLowerCase() || 'ongoing'}`}>
+                    {workload.status || 'Ongoing'}
+                </span>
+            </div>
+            <div className="workload-content">
+                <h3 className="workload-title">
+                    {workload.title}
+                    <span className="cursor-icon material-symbols-outlined">touch_app</span>
+                </h3>
+                <div className="workload-due">
+                    Due: {new Date(workload.dueDate).toLocaleDateString('en-US', {
+                        month: 'short',
+                        day: 'numeric',
+                        year: 'numeric',
+                        weekday: 'long'
+                    })}
+                </div>
+                <div className="workload-type">
+                    <span className="material-symbols-outlined">assignment</span>
+                    {workload.type}
+                </div>
+            </div>
+        </div>
+    );
+
+    const renderWorkloadModal = (workload) => (
+        <div className="modal-overlay" onClick={() => setSelectedWorkload(null)}>
+            <div className="workload-modal" onClick={e => e.stopPropagation()}>
+                <div className="workload-meta">
+                    <span className="tag">{workload.type}</span>
+                    <span className="tag">{workload.quarter}</span>
+                </div>
+
+                <div className="deadline">
+                    <h3>DEADLINE: {new Date(workload.dueDate).toLocaleDateString('en-US', {
+                        weekday: 'long',
+                        month: 'long',
+                        day: 'numeric',
+                        year: 'numeric'
+                    })}</h3>
+                </div>
+
+                <div className="about-section">
+                    <h3>About:</h3>
+                    <div className="content">
+                        {workload.about.split('\n').map((line, index) => {
+                            if (line.trim().match(/^\d+\./)) {
+                                return <ol key={index} start={line.match(/^\d+/)[0]}>
+                                    <li>{line.replace(/^\d+\./, '').trim()}</li>
+                                </ol>;
+                            }
+                            return <p key={index}>{line}</p>;
+                        })}
+                    </div>
+                </div>
+
+                <div className="requirements-section">
+                    <h3>Requirements:</h3>
+                    <div className="content">
+                        <ul>
+                            {workload.requirements.split('\n').map((line, index) => (
+                                <li key={index}>{line}</li>
+                            ))}
+                        </ul>
+                    </div>
+                </div>
+
+                <div className="submit-container">
+                    <input
+                        type="file"
+                        onChange={handleFileChange}
+                        style={{ display: 'none' }}
+                        id="file-upload"
+                    />
+                    <label 
+                        htmlFor="file-upload" 
+                        className="submit-button"
+                    >
+                        Submit work
+                    </label>
+                    {file && (
+                        <div className="file-info">
+                            <span>{file.name}</span>
+                            <button 
+                                onClick={() => handleSubmit(workload.id)}
+                                className="submit-button"
+                                disabled={uploading}
+                            >
+                                {uploading ? 'Submitting...' : 'Confirm submit'}
+                            </button>
+                        </div>
+                    )}
+                </div>
+            </div>
+        </div>
+    );
 
     if (error) {
         return (
@@ -152,72 +278,14 @@ function Workloads() {
                 </div>
 
                 {loading ? (
-                    <div className="loading">
-                        <div className="loading-spinner"></div>
-                        <p>Loading workloads...</p>
-                    </div>
-                ) : filteredWorkloads.length === 0 ? (
-                    <div className="no-workloads">
-                        <p>No workloads available for the selected class.</p>
-                    </div>
+                    <div className="loading">Loading workloads...</div>
                 ) : (
                     <div className="workloads-grid">
-                        {filteredWorkloads.map(workload => (
-                            <div key={workload.id} className="workload-card" onClick={() => handleWorkloadClick(workload)}>
-                                <div className="workload-header">
-                                    <h3>{workload.title}</h3>
-                                    <span className={`status ${workload.status?.toLowerCase() || 'active'}`}>
-                                        {workload.status || 'Active'}
-                                    </span>
-                                </div>
-                                <div className="workload-content">
-                                    <p className="description">{workload.description}</p>
-                                    <div className="workload-details">
-                                        <span className="class">{workload.class}</span>
-                                        <span className="type">{workload.type}</span>
-                                        <span className="points">{workload.points} points</span>
-                                    </div>
-                                    <div className="due-date">
-                                        Due: {new Date(workload.dueDate).toLocaleDateString()}
-                                    </div>
-                                </div>
-                            </div>
-                        ))}
+                        {filteredWorkloads.map(workload => renderWorkloadCard(workload))}
                     </div>
                 )}
 
-                {selectedWorkload && (
-                    <div className="workload-details-modal">
-                        <h2>{selectedWorkload.title}</h2>
-                        <p>{selectedWorkload.description}</p>
-                        <div className="workload-details">
-                            <span className="class">{selectedWorkload.class}</span>
-                            <span className="type">{selectedWorkload.type}</span>
-                            <span className="points">{selectedWorkload.points} points</span>
-                        </div>
-                        <div className="due-date">
-                            Due: {new Date(selectedWorkload.dueDate).toLocaleDateString()}
-                        </div>
-                        <button 
-                            className="submit-button"
-                            onClick={() => handleSubmit(selectedWorkload.id)}
-                        >
-                            Submit Work
-                        </button>
-                        <button 
-                            className="mark-submitted-button"
-                            onClick={() => handleMarkAsSubmitted(selectedWorkload.id)}
-                        >
-                            Mark as Submitted
-                        </button>
-                        <button 
-                            className="close-button"
-                            onClick={() => setSelectedWorkload(null)}
-                        >
-                            Close
-                        </button>
-                    </div>
-                )}
+                {selectedWorkload && renderWorkloadModal(selectedWorkload)}
             </div>
         </div>
     );

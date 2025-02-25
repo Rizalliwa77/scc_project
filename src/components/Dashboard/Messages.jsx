@@ -1,144 +1,176 @@
-import React, { useState } from 'react';
-import './Messages.css';
+import React, { useState, useEffect } from 'react';
+import { db, auth } from '../../firebase';
+import { collection, query, where, onSnapshot, addDoc, serverTimestamp, orderBy, updateDoc, doc } from 'firebase/firestore';
 import Sidebar from '../SideBar/SideBar';
+import { createNewChat, sendMessage } from '../shared/MessageFunctions';
+import './Messages.css';
 
 function Messages() {
     const [activeTab, setActiveTab] = useState('personal');
     const [selectedChat, setSelectedChat] = useState(null);
     const [newMessage, setNewMessage] = useState('');
     const [showNewMessageModal, setShowNewMessageModal] = useState(false);
-    const [selectedRecipient, setSelectedRecipient] = useState(null);
     const [searchQuery, setSearchQuery] = useState('');
+    const [chats, setChats] = useState([]);
+    const [messages, setMessages] = useState([]);
+    const [availableTeachers, setAvailableTeachers] = useState([]);
+    const [availableStudents, setAvailableStudents] = useState([]);
+    const [currentUserData, setCurrentUserData] = useState(null);
+    const [filteredTeachers, setFilteredTeachers] = useState([]);
+    const [filteredStudents, setFilteredStudents] = useState([]);
 
-    // Sample data for personal messages
-    const personalChats = [
-        {
-            id: 1,
-            name: "Ms. Santos",
-            role: "TLE Teacher",
-            lastMessage: "Please submit your research paper by Friday.",
-            timestamp: "10:30 AM",
-            unread: 2,
-            messages: [
-                { id: 1, sender: "Ms. Santos", content: "Good morning! How's your research paper going?", time: "9:15 AM" },
-                { id: 2, sender: "Ms. Santos", content: "Please submit your research paper by Friday.", time: "10:30 AM" },
-            ]
-        },
-        {
-            id: 2,
-            name: "Mr. Reyes",
-            role: "Math Teacher",
-            lastMessage: "The quiz will be on Monday.",
-            timestamp: "Yesterday",
-            unread: 0,
-            messages: [
-                { id: 1, sender: "Mr. Reyes", content: "Don't forget to review Chapter 5.", time: "Yesterday" },
-                { id: 2, sender: "Mr. Reyes", content: "The quiz will be on Monday.", time: "Yesterday" },
-            ]
-        }
-    ];
+    useEffect(() => {
+        if (!auth.currentUser) return;
 
-    // Sample data for school announcements
-    const announcements = [
-        {
-            id: 1,
-            title: "Foundation Week 2024",
-            sender: "School Administration",
-            date: "Jan 25, 2024",
-            content: "Dear Students,\n\nWe are excited to announce our upcoming Foundation Week celebration from February 12-16, 2024. Here are the planned activities:\n\n1. Monday - Opening Ceremony\n2. Tuesday - Academic Competitions\n3. Wednesday - Sports Festival\n4. Thursday - Cultural Show\n5. Friday - Thanksgiving Mass\n\nPlease coordinate with your class advisers for more details.",
-            priority: "high"
-        },
-        {
-            id: 2,
-            title: "Schedule of Midterm Examinations",
-            sender: "Academic Office",
-            date: "Jan 23, 2024",
-            content: "The Midterm Examinations will be conducted from February 5-9, 2024. The detailed schedule will be posted in your respective Google Classrooms.",
-            priority: "high"
-        },
-        {
-            id: 3,
-            title: "Library Update: New Online Resources",
-            sender: "Library Services",
-            date: "Jan 20, 2024",
-            content: "We have added new online research databases accessible through the school portal. Visit the library for orientation on how to access these resources.",
-            priority: "normal"
-        }
-    ];
+        // Fetch users from the sign-in document
+        const signInRef = doc(db, 'sign-in', '1qo1S53fQK4y4HT8GFrS');
+        
+        const unsubscribe = onSnapshot(signInRef, (docSnap) => {
+            if (docSnap.exists()) {
+                const data = docSnap.data();
+                
+                // Get current user data
+                Object.entries(data).forEach(([uid, userData]) => {
+                    if (userData.email === auth.currentUser.email) {
+                        setCurrentUserData({
+                            ...userData,
+                            uid: uid
+                        });
+                    }
+                });
+                
+                // Filter and separate teachers and students
+                const teachers = [];
+                const students = [];
+                
+                Object.entries(data).forEach(([uid, userData]) => {
+                    // Skip current user
+                    if (userData.email === auth.currentUser.email) return;
+                    
+                    const userInfo = {
+                        uid,
+                        fullName: userData.fullName || 'Unknown User',
+                        role: userData.role,
+                        email: userData.email,
+                        lastActive: new Date().toISOString()
+                    };
 
-    // Sample data for available contacts
-    const availableContacts = {
-        teachers: [
-            { id: 1, name: "Ms. Santos", role: "TLE Teacher" },
-            { id: 2, name: "Mr. Reyes", role: "Math Teacher" },
-            { id: 3, name: "Mrs. Cruz", role: "Science Teacher" },
-            { id: 4, name: "Mr. Garcia", role: "English Teacher" }
-        ],
-        classmates: [
-            { id: 5, name: "Juan Dela Cruz", role: "Classmate - 10 STA" },
-            { id: 6, name: "Maria Santos", role: "Classmate - 10 STA" },
-            { id: 7, name: "Pedro Penduko", role: "Classmate - 10 STA" },
-            { id: 8, name: "Ana Reyes", role: "Classmate - 10 STA" }
-        ]
-    };
-
-    const handleSendMessage = (e) => {
-        e.preventDefault();
-        if (!newMessage.trim()) return;
-
-        const updatedChats = personalChats.map(chat => {
-            if (chat.id === selectedChat.id) {
-                return {
-                    ...chat,
-                    messages: [...chat.messages, {
-                        id: chat.messages.length + 1,
-                        sender: "You",
-                        content: newMessage,
-                        time: "Just now"
-                    }]
-                };
+                    if (userData.role === 'teacher') {
+                        teachers.push(userInfo);
+                    } else if (userData.role === 'student') {
+                        students.push(userInfo);
+                    }
+                });
+                
+                setAvailableTeachers(teachers);
+                setAvailableStudents(students);
+                setFilteredTeachers(teachers);
+                setFilteredStudents(students);
             }
-            return chat;
         });
 
-        // Update the chats state here
-        setNewMessage('');
-    };
+        // Fetch existing chats
+        const chatsQuery = query(
+            collection(db, 'chats'),
+            where('participants', 'array-contains', auth.currentUser.uid)
+        );
 
-    const handleNewMessage = () => {
-        setShowNewMessageModal(true);
-    };
+        const chatsUnsubscribe = onSnapshot(chatsQuery, (snapshot) => {
+            const chatsList = snapshot.docs.map(doc => ({
+                id: doc.id,
+                ...doc.data()
+            }));
+            setChats(chatsList);
+        });
 
-    const handleSelectRecipient = (contact) => {
-        setSelectedRecipient(contact);
-        // Check if chat already exists
-        const existingChat = personalChats.find(chat => chat.name === contact.name);
-        if (existingChat) {
-            setSelectedChat(existingChat);
-        } else {
-            // Create new chat
-            const newChat = {
-                id: Date.now(),
-                name: contact.name,
-                role: contact.role,
-                lastMessage: "",
-                timestamp: "Just now",
-                unread: 0,
-                messages: []
-            };
-            // Add new chat to personalChats
-            setSelectedChat(newChat);
+        return () => {
+            unsubscribe();
+            chatsUnsubscribe();
+        };
+    }, []);
+
+    useEffect(() => {
+        if (!selectedChat) return;
+
+        const messagesQuery = query(
+            collection(db, 'chats', selectedChat.id, 'messages'),
+            orderBy('timestamp', 'asc')
+        );
+
+        const unsubscribe = onSnapshot(messagesQuery, (snapshot) => {
+            const messagesList = snapshot.docs.map(doc => ({
+                id: doc.id,
+                ...doc.data()
+            }));
+            setMessages(messagesList);
+        });
+
+        return () => unsubscribe();
+    }, [selectedChat]);
+
+    useEffect(() => {
+        const filteredTeachers = availableTeachers.filter(teacher =>
+            teacher.fullName?.toLowerCase().includes(searchQuery.toLowerCase())
+        );
+        const filteredStudents = availableStudents.filter(student =>
+            student.fullName?.toLowerCase().includes(searchQuery.toLowerCase())
+        );
+        
+        setFilteredTeachers(filteredTeachers);
+        setFilteredStudents(filteredStudents);
+    }, [searchQuery, availableTeachers, availableStudents]);
+
+    const handleSendMessage = async (e) => {
+        e.preventDefault();
+        if (!newMessage.trim() || !selectedChat || !currentUserData) return;
+
+        try {
+            await sendMessage(selectedChat.id, {
+                uid: auth.currentUser.uid,
+                fullName: currentUserData.fullName || 'Unknown User',
+                role: currentUserData.role
+            }, newMessage.trim());
+            setNewMessage('');
+        } catch (error) {
+            console.error('Error sending message:', error);
         }
-        setShowNewMessageModal(false);
     };
 
-    const filteredContacts = {
-        teachers: availableContacts.teachers.filter(contact =>
-            contact.name.toLowerCase().includes(searchQuery.toLowerCase())
-        ),
-        classmates: availableContacts.classmates.filter(contact =>
-            contact.name.toLowerCase().includes(searchQuery.toLowerCase())
-        )
+    const startNewChat = async (recipient) => {
+        if (!currentUserData) return;
+
+        try {
+            const existingChat = chats.find(chat => 
+                chat.participants.includes(recipient.uid)
+            );
+
+            if (existingChat) {
+                setSelectedChat(existingChat);
+                setShowNewMessageModal(false);
+                return;
+            }
+
+            const newChat = await createNewChat(
+                {
+                    uid: auth.currentUser.uid,
+                    fullName: currentUserData.fullName,
+                    role: currentUserData.role,
+                    email: currentUserData.email
+                },
+                recipient
+            );
+
+            setSelectedChat(newChat);
+            setShowNewMessageModal(false);
+        } catch (error) {
+            console.error('Error starting new chat:', error);
+        }
+    };
+
+    const getRecipientDetails = (chat) => {
+        if (!chat?.participants || !chat.participantDetails) return null;
+        const recipientId = chat.participants.find(id => id !== auth.currentUser?.uid);
+        return chat.participantDetails[recipientId];
     };
 
     return (
@@ -169,104 +201,99 @@ function Messages() {
                 </div>
 
                 <div className="messages-container">
-                    {activeTab === 'personal' ? (
-                        <div className="personal-messages">
-                            <div className="chats-list">
-                                <div className="new-message-button">
-                                    <button onClick={handleNewMessage}>
-                                        <span className="material-symbols-outlined">edit</span>
-                                        New Message
-                                    </button>
-                                </div>
-                                {personalChats.map(chat => (
-                                    <div 
+                    <div className="personal-messages">
+                        <div className="chats-list">
+                            <div className="new-message-button">
+                                <button onClick={() => setShowNewMessageModal(true)}>
+                                    <span className="material-symbols-outlined">edit</span>
+                                    New Message
+                                </button>
+                            </div>
+                            {chats.map(chat => {
+                                const recipient = getRecipientDetails(chat);
+                                return (
+                                    <div
                                         key={chat.id}
                                         className={`chat-item ${selectedChat?.id === chat.id ? 'active' : ''}`}
                                         onClick={() => setSelectedChat(chat)}
                                     >
                                         <div className="chat-info">
-                                            <h3>{chat.name}</h3>
-                                            <p className="role">{chat.role}</p>
+                                            <div className="recipient-header">
+                                                <h3>{recipient?.fullName || 'Unknown User'}</h3>
+                                                <span className={`status-indicator ${recipient?.isOnline ? 'online' : 'offline'}`} />
+                                            </div>
+                                            <p className="role">{recipient?.role || 'Unknown Role'}</p>
                                             <p className="last-message">{chat.lastMessage}</p>
                                         </div>
                                         <div className="chat-meta">
-                                            <span className="timestamp">{chat.timestamp}</span>
-                                            {chat.unread > 0 && (
-                                                <span className="unread-badge">{chat.unread}</span>
-                                            )}
+                                            <span className="timestamp">
+                                                {chat.lastMessageTime?.toDate().toLocaleTimeString([], { 
+                                                    hour: '2-digit', 
+                                                    minute: '2-digit' 
+                                                })}
+                                            </span>
                                         </div>
                                     </div>
-                                ))}
-                            </div>
-                            {selectedChat && (
-                                <div className="chat-window">
-                                    <div className="chat-header">
-                                        <h2>{selectedChat.name}</h2>
-                                        <p className="role">{selectedChat.role}</p>
+                                );
+                            })}
+                        </div>
+                        {selectedChat && (
+                            <div className="chat-window">
+                                <div className="chat-header">
+                                    <div className="recipient-info">
+                                        <h2>{getRecipientDetails(selectedChat)?.fullName}</h2>
+                                        <div className="recipient-status">
+                                            <span className={`status-indicator ${getRecipientDetails(selectedChat)?.isOnline ? 'online' : 'offline'}`} />
+                                            <p>{getRecipientDetails(selectedChat)?.isOnline ? 'Online' : 'Offline'}</p>
+                                        </div>
+                                        <p className="role">{getRecipientDetails(selectedChat)?.role}</p>
                                     </div>
-                                    <div className="messages-list">
-                                        {selectedChat.messages.map(message => (
-                                            <div 
-                                                key={message.id}
-                                                className={`message ${message.sender === 'You' ? 'sent' : 'received'}`}
-                                            >
-                                                <div className="message-content">
-                                                    {message.sender !== 'You' && (
-                                                        <div className="message-sender">{message.sender}</div>
-                                                    )}
-                                                    <div className="message-bubble">
-                                                        {message.content}
-                                                    </div>
-                                                    <div className="message-time">{message.time}</div>
+                                </div>
+                                <div className="messages-list">
+                                    {messages.map(message => (
+                                        <div 
+                                            key={message.id}
+                                            className={`message ${message.senderId === auth.currentUser.uid ? 'sent' : 'received'}`}
+                                        >
+                                            <div className="message-content">
+                                                {message.senderId !== auth.currentUser.uid && (
+                                                    <div className="message-sender">{message.senderName}</div>
+                                                )}
+                                                <div className="message-bubble">
+                                                    {message.content}
+                                                </div>
+                                                <div className="message-time">
+                                                    {message.timestamp?.toDate().toLocaleTimeString([], { 
+                                                        hour: '2-digit', 
+                                                        minute: '2-digit' 
+                                                    })}
                                                 </div>
                                             </div>
-                                        ))}
-                                    </div>
-                                    <form className="message-input" onSubmit={handleSendMessage}>
-                                        <input
-                                            type="text"
-                                            placeholder="Type a message..."
-                                            value={newMessage}
-                                            onChange={(e) => setNewMessage(e.target.value)}
-                                        />
-                                        <button type="submit">
-                                            <span className="material-symbols-outlined">send</span>
-                                        </button>
-                                    </form>
+                                        </div>
+                                    ))}
                                 </div>
-                            )}
-                        </div>
-                    ) : (
-                        <div className="announcements-list">
-                            {announcements.map(announcement => (
-                                <div 
-                                    key={announcement.id}
-                                    className={`announcement-card priority-${announcement.priority}`}
-                                >
-                                    <div className="announcement-header">
-                                        <h3>{announcement.title}</h3>
-                                        <span className="announcement-date">{announcement.date}</span>
-                                    </div>
-                                    <p className="announcement-sender">From: {announcement.sender}</p>
-                                    <div className="announcement-content">
-                                        <p>{announcement.content}</p>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    )}
+                                <form className="message-input" onSubmit={handleSendMessage}>
+                                    <input
+                                        type="text"
+                                        placeholder="Type a message..."
+                                        value={newMessage}
+                                        onChange={(e) => setNewMessage(e.target.value)}
+                                    />
+                                    <button type="submit">
+                                        <span className="material-symbols-outlined">send</span>
+                                    </button>
+                                </form>
+                            </div>
+                        )}
+                    </div>
                 </div>
 
-                {/* New Message Modal */}
                 {showNewMessageModal && (
                     <div className="modal-overlay" onClick={() => setShowNewMessageModal(false)}>
                         <div className="new-message-modal" onClick={e => e.stopPropagation()}>
                             <div className="modal-header">
                                 <h2>New Message</h2>
-                                <button 
-                                    className="close-button"
-                                    onClick={() => setShowNewMessageModal(false)}
-                                >
+                                <button className="close-button" onClick={() => setShowNewMessageModal(false)}>
                                     <span className="material-symbols-outlined">close</span>
                                 </button>
                             </div>
@@ -274,37 +301,56 @@ function Messages() {
                                 <span className="material-symbols-outlined">search</span>
                                 <input
                                     type="text"
-                                    placeholder="Search for teachers or classmates..."
+                                    placeholder="Search for users..."
                                     value={searchQuery}
                                     onChange={(e) => setSearchQuery(e.target.value)}
                                 />
                             </div>
-                            <div className="contacts-list">
-                                <div className="contacts-section">
-                                    <h3>Teachers</h3>
-                                    {filteredContacts.teachers.map(contact => (
-                                        <div
-                                            key={contact.id}
-                                            className="contact-item"
-                                            onClick={() => handleSelectRecipient(contact)}
-                                        >
-                                            <h4>{contact.name}</h4>
-                                            <p>{contact.role}</p>
+                            <div className="contacts-section">
+                                <div className="section-title">Teachers</div>
+                                <div className="contacts-list">
+                                    {filteredTeachers.length > 0 ? (
+                                        filteredTeachers.map(teacher => (
+                                            <div
+                                                key={teacher.uid}
+                                                className="contact-item"
+                                                onClick={() => startNewChat(teacher)}
+                                            >
+                                                <div className="contact-header">
+                                                    <h4>{teacher.fullName}</h4>
+                                                </div>
+                                                <p className="contact-role">{teacher.role}</p>
+                                            </div>
+                                        ))
+                                    ) : (
+                                        <div className="no-contacts">
+                                            <p>No teachers found</p>
                                         </div>
-                                    ))}
+                                    )}
                                 </div>
-                                <div className="contacts-section">
-                                    <h3>Classmates</h3>
-                                    {filteredContacts.classmates.map(contact => (
-                                        <div
-                                            key={contact.id}
-                                            className="contact-item"
-                                            onClick={() => handleSelectRecipient(contact)}
-                                        >
-                                            <h4>{contact.name}</h4>
-                                            <p>{contact.role}</p>
+
+                                <div className="section-divider" />
+
+                                <div className="section-title">Students</div>
+                                <div className="contacts-list">
+                                    {filteredStudents.length > 0 ? (
+                                        filteredStudents.map(student => (
+                                            <div
+                                                key={student.uid}
+                                                className="contact-item"
+                                                onClick={() => startNewChat(student)}
+                                            >
+                                                <div className="contact-header">
+                                                    <h4>{student.fullName}</h4>
+                                                </div>
+                                                <p className="contact-role">{student.role}</p>
+                                            </div>
+                                        ))
+                                    ) : (
+                                        <div className="no-contacts">
+                                            <p>No students found</p>
                                         </div>
-                                    ))}
+                                    )}
                                 </div>
                             </div>
                         </div>

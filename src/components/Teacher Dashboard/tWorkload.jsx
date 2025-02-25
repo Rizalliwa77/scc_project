@@ -56,18 +56,20 @@ function TeacherWorkload() {
         setShowModal(true);
     };
 
-    const handleCreate = (newWorkload) => {
-        setWorkloads([newWorkload, ...workloads]);
+    const handleCreate = async (newWorkload) => {
+        setWorkloads(prevWorkloads => [newWorkload, ...prevWorkloads]);
     };
 
-    const handleUpdate = (updatedWorkload) => {
-        setWorkloads(workloads.map(w => 
-            w.id === updatedWorkload.id ? updatedWorkload : w
-        ));
+    const handleUpdate = async (updatedWorkload) => {
+        setWorkloads(prevWorkloads => 
+            prevWorkloads.map(w => w.id === updatedWorkload.id ? updatedWorkload : w)
+        );
     };
 
-    const handleDelete = (workloadId) => {
-        setWorkloads(workloads.filter(w => w.id !== workloadId));
+    const handleDelete = async (workloadId) => {
+        setWorkloads(prevWorkloads => 
+            prevWorkloads.filter(w => w.id !== workloadId)
+        );
     };
 
     const filteredWorkloads = selectedClass === 'All' 

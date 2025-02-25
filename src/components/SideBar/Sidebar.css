@@ -124,3 +124,94 @@
     font-size: 0.75rem;
     opacity: 0.9;
 }
+
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.logout-modal {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    width: 90%;
+    max-width: 400px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+}
+
+.modal-header {
+    margin-bottom: 1rem;
+}
+
+.modal-header h2 {
+    font-size: 1.3rem;
+    color: #333;
+    margin: 0;
+}
+
+.modal-content {
+    margin-bottom: 1.5rem;
+}
+
+.modal-content p {
+    color: #333;
+    margin: 0;
+}
+
+.modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+}
+
+.modal-actions button {
+    padding: 0.8rem 1.5rem;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.cancel-button {
+    background: #f5f5f5;
+    border: none;
+    color: #666;
+}
+
+.cancel-button:hover {
+    background: #e0e0e0;
+}
+
+.confirm-button {
+    background: #333;
+    border: none;
+    color: white;
+}
+
+.confirm-button:hover {
+    background: #222;
+}
+
+@media (max-width: 768px) {
+    .logout-modal {
+        width: 95%;
+        margin: 1rem;
+    }
+
+    .modal-actions {
+        flex-direction: column-reverse;
+        gap: 0.5rem;
+    }
+
+    .modal-actions button {
+        width: 100%;
+    }
+}

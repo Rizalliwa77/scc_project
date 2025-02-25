@@ -17,7 +17,8 @@ function SignIn() {
         grade: '',
         section: '',
         idNumber: '',
-        userType: 'student'
+        userType: 'student',
+        subject: ''
     });
     const [showPopup, setShowPopup] = useState(false);
     const [sections, setSections] = useState([]);
@@ -31,6 +32,18 @@ function SignIn() {
         '9': ['SVF', 'SHP'],
         '10': ['SJH', 'STA']
     };
+
+    const teacherSubjects = [
+        'TLE',
+        'Science',
+        'Computer',
+        'CLE',
+        'English',
+        'Filipino',
+        'Math',
+        'Araling Panlipunan',
+        'MAPEH'
+    ];
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
@@ -88,6 +101,11 @@ function SignIn() {
             }
         }
 
+        if (formData.userType === 'teacher' && !formData.subject) {
+            setError("Please select a subject");
+            return false;
+        }
+
         return true;
     };
 
@@ -114,6 +132,7 @@ function SignIn() {
                     contactNumber: formData.contactNumber,
                     grade: formData.userType === 'student' ? formData.grade : null,
                     section: formData.userType === 'student' ? formData.section : null,
+                    subject: formData.userType === 'teacher' ? formData.subject : null,
                     idNumber: formData.idNumber,
                     role: formData.userType,
                     status: 'pending',
@@ -257,7 +276,24 @@ function SignIn() {
                                     required 
                                 />
                             </div>
-                            {formData.userType === 'student' && (
+                            {formData.userType === 'teacher' ? (
+                                <div className="form-group">
+                                    <select 
+                                        className="signin-input" 
+                                        value={formData.subject}
+                                        onChange={handleInputChange}
+                                        required
+                                        name="subject"
+                                    >
+                                        <option value="">Select Subject</option>
+                                        {teacherSubjects.map((subject) => (
+                                            <option key={subject} value={subject}>
+                                                {subject}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
+                            ) : (
                                 <div className="form-group">
                                     <select 
                                         className="signin-input" 

@@ -9,6 +9,19 @@ function Dashboard() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
+    // Add new state for subjects
+    const [subjects] = useState([
+        { name: 'TLE', progress: 85, icon: 'engineering' },
+        { name: 'Science', progress: 72, icon: 'science' },
+        { name: 'Computer', progress: 90, icon: 'computer' },
+        { name: 'CLE', progress: 68, icon: 'menu_book' },
+        { name: 'English', progress: 75, icon: 'translate' },
+        { name: 'Filipino', progress: 88, icon: 'history_edu' },
+        { name: 'Math', progress: 70, icon: 'calculate' },
+        { name: 'AP', progress: 82, icon: 'public' },
+        { name: 'MAPEH', progress: 95, icon: 'sports_basketball' }
+    ]);
+
     useEffect(() => {
         fetchWorkloads();
     }, []);
@@ -53,46 +66,69 @@ function Dashboard() {
     };
 
     return (
-        <div className="dashboard-container">
+        <div className="dashboard-layout">
             <Sidebar />
-            <div className="main-content">
+            <div className="dashboard-wrapper">
                 <div className="dashboard-header">
-                    <h1>Student Dashboard</h1>
+                    <div className="header-left">
+                        <h1>Student Dashboard</h1>
+                        <span className="semester-info">1st Semester AY 2023-2024</span>
+                    </div>
+                    <div className="section-dropdown">
+                        Grade 10 - STA
+                    </div>
                 </div>
 
-                {loading ? (
-                    <div className="loading">Loading workloads...</div>
-                ) : error ? (
-                    <div className="error-message">{error}</div>
-                ) : workloads.length === 0 ? (
-                    <div className="no-workloads">
-                        <p>No workloads available at the moment.</p>
-                    </div>
-                ) : (
-                    <div className="workloads-grid">
-                        {workloads.map(workload => (
-                            <div key={workload.id} className="workload-card">
-                                <div className="workload-header">
-                                    <h3>{workload.title}</h3>
-                                    <span className={`status ${workload.status ? workload.status.toLowerCase() : 'active'}`}>
-                                        {workload.status || 'Active'}
-                                    </span>
+                <div className="dashboard-content">
+                    <div className="subjects-grid">
+                        {subjects.map((subject, index) => (
+                            <div key={index} className="subject-card">
+                                <div className="subject-icon">
+                                    <span className="material-symbols-outlined">{subject.icon}</span>
                                 </div>
-                                <div className="workload-content">
-                                    <p>{workload.description}</p>
-                                    <div className="workload-details">
-                                        <span className="class">{workload.class}</span>
-                                        <span className="type">{workload.type}</span>
-                                        <span className="points">{workload.points} points</span>
+                                <div className="subject-info">
+                                    <div className="subject-name">{subject.name}</div>
+                                    <div className="progress-bar">
+                                        <div 
+                                            className="progress" 
+                                            style={{ width: `${subject.progress}%` }}
+                                        ></div>
                                     </div>
-                                    <div className="due-date">
-                                        Due: {new Date(workload.dueDate).toLocaleDateString()}
-                                    </div>
+                                    <span className="progress-text">{subject.progress}% Complete</span>
                                 </div>
                             </div>
                         ))}
                     </div>
-                )}
+
+                    <div className="deadline-section">
+                        <div className="deadline-header">
+                            <h2>📅 Upcoming Deadlines</h2>
+                            <button className="view-all">View All</button>
+                        </div>
+                        
+                        <div className="deadline-container">
+                            {loading ? (
+                                <div className="loading">Loading deadlines...</div>
+                            ) : error ? (
+                                <div className="error-message">{error}</div>
+                            ) : workloads.length === 0 ? (
+                                <p>No upcoming deadlines</p>
+                            ) : (
+                                workloads.slice(0, 5).map(workload => (
+                                    <div key={workload.id} className="deadline-card">
+                                        <div className="assignment-header">
+                                            <span className="assignment-type">{workload.type}</span>
+                                            <span className={`status-badge ${workload.status?.toLowerCase() || 'upcoming'}`}>
+                                                {workload.status || 'Upcoming'}
+                                            </span>
+                                        </div>
+                                        <div className="assignment-title">{workload.title}</div>
+                                    </div>
+                                ))
+                            )}
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     );

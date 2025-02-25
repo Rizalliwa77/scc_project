@@ -7,14 +7,18 @@ function WorkloadModal({ onClose, onCreate, onUpdate, onDelete, workload, mode =
     const [formData, setFormData] = useState(
         mode === 'edit' ? workload : {
             title: '',
-            description: '',
+            about: '',
+            requirements: '',
             class: 'Grade 10 - STA',
-            type: 'assignment',
+            type: 'Assignment',
+            quarter: '1st Quarter',
             dueDate: '',
             points: '',
             status: 'Active',
+            subject: 'Technical Livelihood Education',
             submissions: [],
-            createdBy: auth.currentUser?.email || ''
+            teacherId: auth.currentUser?.uid || '',
+            teacherEmail: auth.currentUser?.email || ''
         }
     );
 
@@ -25,13 +29,24 @@ function WorkloadModal({ onClose, onCreate, onUpdate, onDelete, workload, mode =
 
     const classes = [
         'Grade 10 - STA',
-        'Grade 10 - STB',
-        'Grade 9 - SVF',
-        'Grade 9 - SHP'
+        'Grade 10 - SJH',
+        'Grade 9 - SVP',
+        'Grade 9 - SHP',
+        'Grade 8 - SLR',
+        'Grade 8 - SPEV',
+        'Grade 7 - STS',
+        'Grade 7 - SRL',
+        'Grade 7 - SAM'
     ];
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        
+        if (!formData.about.trim() || !formData.requirements.trim()) {
+            setError('About and Requirements fields are required');
+            return;
+        }
+
         if (mode === 'edit') {
             setShowUpdateConfirm(true);
         } else {
@@ -52,15 +67,16 @@ function WorkloadModal({ onClose, onCreate, onUpdate, onDelete, workload, mode =
                 ...formData,
                 updatedAt: new Date().toISOString(),
                 points: Number(formData.points),
-                dueDate: new Date(formData.dueDate).toISOString()
+                dueDate: new Date(formData.dueDate).toISOString(),
+                subject: 'Technical Livelihood Education',
+                teacherId: auth.currentUser.uid,
+                teacherEmail: auth.currentUser.email
             };
 
             if (mode === 'edit') {
-                // Update existing workload
                 const collectionRef = collection(db, formData.type === 'assignment' ? 'assignments' : 'projects');
                 const docRef = doc(collectionRef, workload.id);
                 
-                // Verify document exists and belongs to the teacher
                 const docSnap = await getDoc(docRef);
                 if (!docSnap.exists()) {
                     throw new Error('Workload not found');
@@ -72,12 +88,9 @@ function WorkloadModal({ onClose, onCreate, onUpdate, onDelete, workload, mode =
                 await updateDoc(docRef, formattedData);
                 onUpdate({ id: workload.id, ...formattedData });
             } else {
-                // Create new workload
                 formattedData.createdAt = new Date().toISOString();
                 formattedData.status = 'Active';
                 formattedData.submissions = [];
-                formattedData.teacherId = auth.currentUser.uid;
-                formattedData.teacherEmail = auth.currentUser.email;
 
                 const collectionRef = collection(db, formData.type === 'assignment' ? 'assignments' : 'projects');
                 const docRef = await addDoc(collectionRef, formattedData);
@@ -106,7 +119,6 @@ function WorkloadModal({ onClose, onCreate, onUpdate, onDelete, workload, mode =
             const collectionRef = collection(db, workload.type === 'assignment' ? 'assignments' : 'projects');
             const docRef = doc(collectionRef, workload.id);
             
-            // Verify document exists and belongs to the teacher
             const docSnap = await getDoc(docRef);
             if (!docSnap.exists()) {
                 throw new Error('Workload not found');
@@ -145,7 +157,7 @@ function WorkloadModal({ onClose, onCreate, onUpdate, onDelete, workload, mode =
 
                 {showDeleteConfirm ? (
                     <div className="confirmation-dialog">
-                        <h3>Confirm Delete</h3>
+                        <h3 className="delete">Delete Workload</h3>
                         <p>Are you sure you want to delete this workload? This action cannot be undone.</p>
                         <div className="modal-actions">
                             <button 
@@ -198,33 +210,7 @@ function WorkloadModal({ onClose, onCreate, onUpdate, onDelete, workload, mode =
                                 placeholder="Enter workload title"
                             />
                         </div>
-                        <div className="form-group">
-                            <label>Description</label>
-                            <textarea
-                                value={formData.description}
-                                onChange={(e) => setFormData({...formData, description: e.target.value})}
-                                required
-                                disabled={isSubmitting}
-                                placeholder="Enter workload description"
-                                rows="4"
-                            />
-                        </div>
                         <div className="form-row">
-                            <div className="form-group">
-                                <label>Class</label>
-                                <select
-                                    value={formData.class}
-                                    onChange={(e) => setFormData({...formData, class: e.target.value})}
-                                    required
-                                    disabled={isSubmitting}
-                                >
-                                    {classes.map(className => (
-                                        <option key={className} value={className}>
-                                            {className}
-                                        </option>
-                                    ))}
-                                </select>
-                            </div>
                             <div className="form-group">
                                 <label>Type</label>
                                 <select
@@ -235,7 +221,50 @@ function WorkloadModal({ onClose, onCreate, onUpdate, onDelete, workload, mode =
                                 >
                                     <option value="assignment">Assignment</option>
                                     <option value="project">Project</option>
+                                    <option value="quiz">Quiz</option>
                                 </select>
+                            </div>
+                            <div className="form-group">
+                                <label>Quarter</label>
+                                <select
+                                    value={formData.quarter}
+                                    onChange={(e) => setFormData({...formData, quarter: e.target.value})}
+                                    required
+                                    disabled={isSubmitting}
+                                >
+                                    <option value="1st Quarter">1st Quarter</option>
+                                    <option value="2nd Quarter">2nd Quarter</option>
+                                    <option value="3rd Quarter">3rd Quarter</option>
+                                    <option value="4th Quarter">4th Quarter</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div className="form-section">
+                            <h3>About</h3>
+                            <div className="form-group">
+                                <textarea
+                                    value={formData.about}
+                                    onChange={(e) => setFormData({...formData, about: e.target.value})}
+                                    required
+                                    disabled={isSubmitting}
+                                    placeholder="Enter detailed information about the workload"
+                                    rows="6"
+                                    className="about-textarea"
+                                />
+                            </div>
+                        </div>
+                        <div className="form-section">
+                            <h3>Requirements</h3>
+                            <div className="form-group">
+                                <textarea
+                                    value={formData.requirements}
+                                    onChange={(e) => setFormData({...formData, requirements: e.target.value})}
+                                    required
+                                    disabled={isSubmitting}
+                                    placeholder="Enter detailed requirements for the workload"
+                                    rows="6"
+                                    className="requirements-textarea"
+                                />
                             </div>
                         </div>
                         <div className="form-row">

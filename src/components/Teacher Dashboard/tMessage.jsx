@@ -1,244 +1,362 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { db, auth } from '../../firebase';
+import { collection, query, where, onSnapshot, addDoc, serverTimestamp, orderBy, updateDoc, doc } from 'firebase/firestore';
 import TeacherSidebar from '../SideBar/Teacher_Sidebar';
-import './tMessages.css';
+import { createNewChat, sendMessage } from '../shared/MessageFunctions';
+import '../Dashboard/Messages.css';  // Use the same CSS file
 
 function TeacherMessages() {
-    const [activeTab, setActiveTab] = useState('messages');
+    const [activeTab, setActiveTab] = useState('personal');
     const [selectedChat, setSelectedChat] = useState(null);
     const [newMessage, setNewMessage] = useState('');
-    const [showNewAnnouncementModal, setShowNewAnnouncementModal] = useState(false);
-    const [selectedClass, setSelectedClass] = useState('all');
+    const [showNewMessageModal, setShowNewMessageModal] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
+    const [chats, setChats] = useState([]);
+    const [messages, setMessages] = useState([]);
+    const [availableTeachers, setAvailableTeachers] = useState([]);
+    const [availableStudents, setAvailableStudents] = useState([]);
+    const [currentUserData, setCurrentUserData] = useState(null);
+    const [filteredTeachers, setFilteredTeachers] = useState([]);
+    const [filteredStudents, setFilteredStudents] = useState([]);
 
-    const classes = [
-        { id: 'all', name: 'All Classes' },
-        { id: 'g10sta', name: 'Grade 10 - STA' },
-        { id: 'g10stb', name: 'Grade 10 - STB' },
-        { id: 'g9svf', name: 'Grade 9 - SVF' }
-    ];
+    useEffect(() => {
+        if (!auth.currentUser) return;
 
-    const chats = [
-        {
-            id: 1,
-            student: {
-                name: "Juan Dela Cruz",
-                class: "Grade 10 - STA",
-                avatar: "JD"
-            },
-            lastMessage: "Good morning po, about po sa research paper...",
-            timestamp: "10:30 AM",
-            unread: 2,
-            messages: [
-                { id: 1, sender: "student", content: "Good morning po, about po sa research paper...", time: "10:30 AM" },
-                { id: 2, sender: "teacher", content: "Yes, what about it?", time: "10:35 AM" }
-            ]
-        },
-    ];
+        // Fetch users from the sign-in document
+        const signInRef = doc(db, 'sign-in', '1qo1S53fQK4y4HT8GFrS');
+        
+        const unsubscribe = onSnapshot(signInRef, (docSnap) => {
+            if (docSnap.exists()) {
+                const data = docSnap.data();
+                
+                // Get current user data
+                Object.entries(data).forEach(([uid, userData]) => {
+                    if (userData.email === auth.currentUser.email) {
+                        setCurrentUserData({
+                            ...userData,
+                            uid: uid
+                        });
+                    }
+                });
+                
+                // Filter and separate teachers and students
+                const teachers = [];
+                const students = [];
+                
+                Object.entries(data).forEach(([uid, userData]) => {
+                    // Skip current user
+                    if (userData.email === auth.currentUser.email) return;
+                    
+                    const userInfo = {
+                        uid,
+                        fullName: userData.fullName || 'Unknown User',
+                        role: userData.role,
+                        email: userData.email,
+                        lastActive: new Date().toISOString()
+                    };
 
-    const announcements = [
-        {
-            id: 1,
-            title: "Research Paper Guidelines",
-            content: "Dear students, I've uploaded the detailed guidelines...",
-            class: "Grade 10 - STA",
-            date: "Jan 25, 2024",
-            status: "Active",
-            recipients: 45,
-            views: 40
-        },
-    ];
+                    if (userData.role === 'teacher') {
+                        teachers.push(userInfo);
+                    } else if (userData.role === 'student') {
+                        students.push(userInfo);
+                    }
+                });
+                
+                setAvailableTeachers(teachers);
+                setAvailableStudents(students);
+                setFilteredTeachers(teachers);
+                setFilteredStudents(students);
+            }
+        });
 
-    const handleSendMessage = (e) => {
+        // Fetch existing chats
+        const chatsQuery = query(
+            collection(db, 'chats'),
+            where('participants', 'array-contains', auth.currentUser.uid)
+        );
+
+        const chatsUnsubscribe = onSnapshot(chatsQuery, (snapshot) => {
+            const chatsList = snapshot.docs.map(doc => ({
+                id: doc.id,
+                ...doc.data()
+            }));
+            setChats(chatsList);
+        });
+
+        return () => {
+            unsubscribe();
+            chatsUnsubscribe();
+        };
+    }, []);
+
+    useEffect(() => {
+        if (!selectedChat) return;
+
+        const messagesQuery = query(
+            collection(db, 'chats', selectedChat.id, 'messages'),
+            orderBy('timestamp', 'asc')
+        );
+
+        const unsubscribe = onSnapshot(messagesQuery, (snapshot) => {
+            const messagesList = snapshot.docs.map(doc => ({
+                id: doc.id,
+                ...doc.data()
+            }));
+            setMessages(messagesList);
+        });
+
+        return () => unsubscribe();
+    }, [selectedChat]);
+
+    useEffect(() => {
+        const filteredTeachers = availableTeachers.filter(teacher =>
+            teacher.fullName?.toLowerCase().includes(searchQuery.toLowerCase())
+        );
+        const filteredStudents = availableStudents.filter(student =>
+            student.fullName?.toLowerCase().includes(searchQuery.toLowerCase())
+        );
+        
+        setFilteredTeachers(filteredTeachers);
+        setFilteredStudents(filteredStudents);
+    }, [searchQuery, availableTeachers, availableStudents]);
+
+    const handleSendMessage = async (e) => {
         e.preventDefault();
-        if (!newMessage.trim()) return;
-        setNewMessage('');
+        if (!newMessage.trim() || !selectedChat || !currentUserData) return;
+
+        try {
+            await sendMessage(selectedChat.id, {
+                uid: auth.currentUser.uid,
+                fullName: currentUserData.fullName || 'Unknown User',
+                role: currentUserData.role
+            }, newMessage.trim());
+            setNewMessage('');
+        } catch (error) {
+            console.error('Error sending message:', error);
+        }
     };
 
-    const handleCreateAnnouncement = () => {
-        setShowNewAnnouncementModal(true);
+    const startNewChat = async (recipient) => {
+        if (!currentUserData) return;
+
+        try {
+            const existingChat = chats.find(chat => 
+                chat.participants.includes(recipient.uid)
+            );
+
+            if (existingChat) {
+                setSelectedChat(existingChat);
+                setShowNewMessageModal(false);
+                return;
+            }
+
+            const newChat = await createNewChat(
+                { 
+                    uid: auth.currentUser.uid,
+                    fullName: currentUserData.fullName || 'Unknown User',
+                    role: currentUserData.role
+                },
+                recipient
+            );
+
+            setSelectedChat(newChat);
+            setShowNewMessageModal(false);
+        } catch (error) {
+            console.error('Error starting new chat:', error);
+        }
+    };
+
+    const getRecipientDetails = (chat) => {
+        if (!chat || !chat.participants) return null;
+        const recipientId = chat.participants.find(id => id !== auth.currentUser?.uid);
+        return chat.participantDetails?.[recipientId] || null;
     };
 
     return (
         <div className="dashboard-layout">
-            <TeacherSidebar /> {/* Fixed Component Usage */}
+            <TeacherSidebar />
             <div className="dashboard-wrapper">
-                <div className="messages-container">
-                    <div className="messages-header">
-                        <div className="header-tabs">
+                <div className="dashboard-header">
+                    <div className="header-left">
+                        <h1>MESSAGES</h1>
+                        <p className="semester-info">1st Semester AY 2023-2024</p>
+                    </div>
+                    <div className="header-right">
+                        <div className="message-tabs">
                             <button 
-                                className={`tab-button ${activeTab === 'messages' ? 'active' : ''}`}
-                                onClick={() => setActiveTab('messages')}
+                                className={`tab-button ${activeTab === 'personal' ? 'active' : ''}`}
+                                onClick={() => setActiveTab('personal')}
                             >
-                                Messages
+                                Personal Messages
                             </button>
                             <button 
                                 className={`tab-button ${activeTab === 'announcements' ? 'active' : ''}`}
                                 onClick={() => setActiveTab('announcements')}
                             >
-                                Announcements
+                                School Announcements
                             </button>
                         </div>
-                        <div className="header-actions">
-                            <select 
-                                value={selectedClass}
-                                onChange={(e) => setSelectedClass(e.target.value)}
-                                className="class-select"
-                            >
-                                {classes.map(cls => (
-                                    <option key={cls.id} value={cls.id}>{cls.name}</option>
-                                ))}
-                            </select>
-                            {activeTab === 'announcements' && (
-                                <button 
-                                    className="create-announcement-btn"
-                                    onClick={handleCreateAnnouncement}
-                                >
-                                    <span className="material-symbols-outlined">add_circle</span>
-                                    New Announcement
-                                </button>
-                            )}
-                        </div>
                     </div>
+                </div>
 
-                    <div className="messages-content">
-                        {activeTab === 'messages' ? (
-                            <div className="messages-layout">
-                                <div className="chats-list">
-                                    <div className="search-box">
-                                        <span className="material-symbols-outlined">search</span>
-                                        <input
-                                            type="text"
-                                            placeholder="Search messages..."
-                                            value={searchQuery}
-                                            onChange={(e) => setSearchQuery(e.target.value)}
-                                        />
-                                    </div>
-                                    {chats.map(chat => (
-                                        <div 
-                                            key={chat.id}
-                                            className={`chat-item ${selectedChat?.id === chat.id ? 'active' : ''}`}
-                                            onClick={() => setSelectedChat(chat)}
-                                        >
-                                            <div className="chat-avatar">{chat.student.avatar}</div>
-                                            <div className="chat-info">
-                                                <div className="chat-header">
-                                                    <h4>{chat.student.name}</h4>
-                                                    <span className="chat-time">{chat.timestamp}</span>
-                                                </div>
-                                                <p className="chat-preview">{chat.lastMessage}</p>
-                                                <span className="student-class">{chat.student.class}</span>
+                <div className="messages-container">
+                    <div className="personal-messages">
+                        <div className="chats-list">
+                            <div className="new-message-button">
+                                <button onClick={() => setShowNewMessageModal(true)}>
+                                    <span className="material-symbols-outlined">edit</span>
+                                    New Message
+                                </button>
+                            </div>
+                            {chats.map(chat => {
+                                const recipient = getRecipientDetails(chat);
+                                return (
+                                    <div 
+                                        key={chat.id}
+                                        className={`chat-item ${selectedChat?.id === chat.id ? 'active' : ''}`}
+                                        onClick={() => setSelectedChat(chat)}
+                                    >
+                                        <div className="chat-info">
+                                            <div className="recipient-header">
+                                                <h3>{recipient?.fullName || 'Unknown User'}</h3>
+                                                <span className={`status-indicator ${recipient?.isOnline ? 'online' : 'offline'}`} />
                                             </div>
-                                            {chat.unread > 0 && (
-                                                <span className="unread-badge">{chat.unread}</span>
-                                            )}
+                                            <p className="role">{recipient?.role || 'Unknown Role'}</p>
+                                            <p className="last-message">{chat.lastMessage}</p>
+                                        </div>
+                                        <div className="chat-meta">
+                                            <span className="timestamp">
+                                                {chat.lastMessageTime?.toDate().toLocaleTimeString([], { 
+                                                    hour: '2-digit', 
+                                                    minute: '2-digit' 
+                                                })}
+                                            </span>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                        {selectedChat && (
+                            <div className="chat-window">
+                                <div className="chat-header">
+                                    <div className="recipient-info">
+                                        <h2>{getRecipientDetails(selectedChat)?.fullName}</h2>
+                                        <div className="recipient-status">
+                                            <span className={`status-indicator ${getRecipientDetails(selectedChat)?.isOnline ? 'online' : 'offline'}`} />
+                                            <p>{getRecipientDetails(selectedChat)?.isOnline ? 'Online' : 'Offline'}</p>
+                                        </div>
+                                        <p className="role">{getRecipientDetails(selectedChat)?.role}</p>
+                                    </div>
+                                </div>
+                                <div className="messages-list">
+                                    {messages.map(message => (
+                                        <div 
+                                            key={message.id}
+                                            className={`message ${message.senderId === auth.currentUser.uid ? 'sent' : 'received'}`}
+                                        >
+                                            <div className="message-content">
+                                                {message.senderId !== auth.currentUser.uid && (
+                                                    <div className="message-sender">{message.senderName}</div>
+                                                )}
+                                                <div className="message-bubble">
+                                                    {message.content}
+                                                </div>
+                                                <div className="message-time">
+                                                    {message.timestamp?.toDate().toLocaleTimeString([], { 
+                                                        hour: '2-digit', 
+                                                        minute: '2-digit' 
+                                                    })}
+                                                </div>
+                                            </div>
                                         </div>
                                     ))}
                                 </div>
-
-                                {selectedChat ? (
-                                    <div className="chat-window">
-                                        <div className="chat-header">
-                                            <div className="chat-user-info">
-                                                <h3>{selectedChat.student.name}</h3>
-                                                <span className="student-class">
-                                                    {selectedChat.student.class}
-                                                </span>
-                                            </div>
-                                        </div>
-                                        <div className="messages-list">
-                                            {selectedChat.messages.map(message => (
-                                                <div 
-                                                    key={message.id}
-                                                    className={`message ${message.sender}`}
-                                                >
-                                                    <div className="message-content">
-                                                        <p>{message.content}</p>
-                                                        <span className="message-time">
-                                                            {message.time}
-                                                        </span>
-                                                    </div>
-                                                </div>
-                                            ))}
-                                        </div>
-                                        <form className="message-input" onSubmit={handleSendMessage}>
-                                            <input
-                                                type="text"
-                                                placeholder="Type a message..."
-                                                value={newMessage}
-                                                onChange={(e) => setNewMessage(e.target.value)}
-                                            />
-                                            <button type="submit">
-                                                <span className="material-symbols-outlined">send</span>
-                                            </button>
-                                        </form>
-                                    </div>
-                                ) : (
-                                    <div className="no-chat-selected">
-                                        <span className="material-symbols-outlined">chat</span>
-                                        <p>Select a conversation to start messaging</p>
-                                    </div>
-                                )}
-                            </div>
-                        ) : (
-                            <div className="announcements-section">
-                                {announcements.map(announcement => (
-                                    <div key={announcement.id} className="announcement-card">
-                                        <div className="announcement-header">
-                                            <h3>{announcement.title}</h3>
-                                        </div>
-                                        <p className="announcement-content">{announcement.content}</p>
-                                        <div className="announcement-footer">
-                                            <div className="announcement-meta">
-                                                <span className="class-tag">{announcement.class}</span>
-                                                <span className="date">{announcement.date}</span>
-                                            </div>
-                                            <div className="announcement-stats">
-                                                <span className="views">
-                                                    <span className="material-symbols-outlined">visibility</span>
-                                                    {announcement.views}/{announcement.recipients}
-                                                </span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                ))}
+                                <form className="message-input" onSubmit={handleSendMessage}>
+                                    <input
+                                        type="text"
+                                        placeholder="Type a message..."
+                                        value={newMessage}
+                                        onChange={(e) => setNewMessage(e.target.value)}
+                                    />
+                                    <button type="submit">
+                                        <span className="material-symbols-outlined">send</span>
+                                    </button>
+                                </form>
                             </div>
                         )}
                     </div>
                 </div>
-            </div>
 
-            {showNewAnnouncementModal && (
-                <AnnouncementModal onClose={() => setShowNewAnnouncementModal(false)} />
-            )}
-        </div>
-    );
-}
+                {showNewMessageModal && (
+                    <div className="modal-overlay" onClick={() => setShowNewMessageModal(false)}>
+                        <div className="new-message-modal" onClick={e => e.stopPropagation()}>
+                            <div className="modal-header">
+                                <h2>New Message</h2>
+                                <button className="close-button" onClick={() => setShowNewMessageModal(false)}>
+                                    <span className="material-symbols-outlined">close</span>
+                                </button>
+                            </div>
+                            <div className="search-box">
+                                <span className="material-symbols-outlined">search</span>
+                                <input
+                                    type="text"
+                                    placeholder="Search for users..."
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                />
+                            </div>
+                            <div className="contacts-section">
+                                {/* Teachers Section */}
+                                <div className="section-title">Teachers</div>
+                                <div className="contacts-list">
+                                    {filteredTeachers.length > 0 ? (
+                                        filteredTeachers.map(teacher => (
+                                            <div
+                                                key={teacher.uid}
+                                                className="contact-item"
+                                                onClick={() => startNewChat(teacher)}
+                                            >
+                                                <div className="contact-header">
+                                                    <h4>{teacher.fullName}</h4>
+                                                </div>
+                                                <p className="contact-role">{teacher.role}</p>
+                                            </div>
+                                        ))
+                                    ) : (
+                                        <div className="no-contacts">
+                                            <p>No teachers found</p>
+                                        </div>
+                                    )}
+                                </div>
 
-function AnnouncementModal({ onClose }) {
-    const [formData, setFormData] = useState({
-        title: '',
-        content: '',
-        class: '',
-        priority: 'normal'
-    });
+                                <div className="section-divider" />
 
-    const handleSubmit = (e) => {
-        e.preventDefault();
-        onClose();
-    };
-
-    return (
-        <div className="modal-overlay">
-            <div className="announcement-modal">
-                <div className="modal-header">
-                    <h2>Create New Announcement</h2>
-                    <button onClick={onClose}>
-                        <span className="material-symbols-outlined">close</span>
-                    </button>
-                </div>
-                <form onSubmit={handleSubmit}>
-                    {/* Add form fields */}
-                </form>
+                                {/* Students Section */}
+                                <div className="section-title">Students</div>
+                                <div className="contacts-list">
+                                    {filteredStudents.length > 0 ? (
+                                        filteredStudents.map(student => (
+                                            <div
+                                                key={student.uid}
+                                                className="contact-item"
+                                                onClick={() => startNewChat(student)}
+                                            >
+                                                <div className="contact-header">
+                                                    <h4>{student.fullName}</h4>
+                                                </div>
+                                                <p className="contact-role">{student.role}</p>
+                                            </div>
+                                        ))
+                                    ) : (
+                                        <div className="no-contacts">
+                                            <p>No students found</p>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
             </div>
         </div>
     );

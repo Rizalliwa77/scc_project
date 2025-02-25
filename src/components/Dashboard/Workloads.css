@@ -54,30 +54,85 @@
 
 .workload-card {
     background: white;
-    padding: 1.2rem;
-    border-radius: 12px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-    border: 1px solid rgba(0, 0, 0, 0.05);
-    transition: all 0.3s ease;
+    border-radius: 16px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
     cursor: pointer;
+    transition: all 0.2s ease;
 }
 
 .workload-card:hover {
     transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
-.card-header {
+.workload-card-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
     margin-bottom: 1rem;
 }
 
-.subject-tag {
-    font-size: 0.8rem;
+.workload-subject {
+    font-size: 1.1rem;
+    font-weight: 600;
     color: #1a237e;
+}
+
+.status-badge {
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 0.85rem;
     font-weight: 500;
+}
+
+.status-badge.ongoing {
+    background-color: #FFF3E0;
+    color: #FF9800;
+}
+
+.workload-content {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.workload-title {
+    font-size: 1.4rem;
+    color: #333;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 0;
+}
+
+.cursor-icon {
+    font-size: 1.25rem;
+    color: #666;
+    transition: transform 0.2s ease;
+}
+
+.workload-card:hover .cursor-icon {
+    transform: translateY(-2px);
+}
+
+.workload-due {
+    color: #666;
+    font-size: 1rem;
+}
+
+.workload-type {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #666;
+    font-size: 0.9rem;
+    margin-top: 0.5rem;
+}
+
+.workload-type .material-symbols-outlined {
+    font-size: 1.1rem;
 }
 
 .card-content h3 {
@@ -105,28 +160,6 @@
     color: #666;
 }
 
-.status-badge {
-    font-size: 0.7rem;
-    padding: 0.2rem 0.6rem;
-    border-radius: 12px;
-    font-weight: 500;
-}
-
-.status-badge.completed {
-    background: #e8f5e9;
-    color: #2e7d32;
-}
-
-.status-badge.ongoing {
-    background: #fff3e0;
-    color: #e65100;
-}
-
-.status-badge.scheduled {
-    background: #e3f2fd;
-    color: #1565c0;
-}
-
 .subject-select {
     background: none;
     border: none;
@@ -151,6 +184,14 @@
     .header-section {
         flex-direction: column;
         gap: 15px;
+    }
+    
+    .workload-card {
+        padding: 1.25rem;
+    }
+    
+    .workload-title {
+        font-size: 1.2rem;
     }
 }
 
@@ -287,48 +328,13 @@
 
 .workloads-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
     gap: 1.5rem;
+    padding: 1.5rem;
 }
 
 .workload-card {
-    background: white;
-    border-radius: 12px;
-    padding: 1.5rem;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    transition: all 0.3s ease;
-    cursor: pointer;
-}
-
-.workload-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-}
-
-.workload-details-modal {
-    position: fixed;
-    top: 20%;
-    left: 50%;
-    transform: translate(-50%, -20%);
-    background: white;
-    padding: 2rem;
-    border-radius: 8px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-    z-index: 1000;
-}
-
-.close-button {
-    margin-top: 1rem;
-    background: #f44336;
-    color: white;
-    border: none;
-    padding: 0.5rem 1rem;
-    border-radius: 4px;
-    cursor: pointer;
-}
-
-.close-button:hover {
-    background: #d32f2f;
+    background: linear-gradient(to bottom right, #ffffff, #fafafa);
 }
 
 .submit-button {
@@ -339,6 +345,7 @@
     padding: 0.5rem 1rem;
     border-radius: 4px;
     cursor: pointer;
+    text-transform: none;
 }
 
 .submit-button:hover {
@@ -346,3 +353,159 @@
 }
 
 /* Add any additional styles as needed */
+
+/* Modal Styles */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.workload-modal {
+    background: white;
+    border-radius: 12px;
+    padding: 2rem;
+    width: 90%;
+    max-width: 800px;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+
+.modal-header h2 {
+    font-size: 1.5rem;
+    color: #1a237e;
+}
+
+.workload-meta {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.tag {
+    background: #000;
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    font-size: 0.9rem;
+    text-transform: lowercase;
+}
+
+.deadline {
+    margin: 2rem 0;
+}
+
+.deadline h3 {
+    font-family: 'Poppins', sans-serif;
+    font-size: 1.1rem;
+    color: #000;
+    margin-bottom: 0.5rem;
+    text-transform: uppercase;
+}
+
+.about-section h3,
+.requirements-section h3 {
+    font-family: 'Poppins', sans-serif;
+    font-size: 1.1rem;
+    color: #000;
+    margin-bottom: 1rem;
+    text-transform: none;
+}
+
+.content {
+    background: transparent;
+    padding: 0;
+    white-space: pre-wrap;
+    color: rgb(101, 101, 101);
+}
+
+.content p {
+    margin-bottom: 0.5rem;
+    line-height: 1.6;
+}
+
+/* Style for numbered lists */
+.content ol {
+    list-style-type: decimal;
+    padding-left: 1.5rem;
+    color: rgb(101, 101, 101);
+}
+
+.content ol li {
+    margin-bottom: 0.5rem;
+}
+
+.requirements-section ul {
+    list-style-type: disc;
+    padding-left: 1.5rem;
+    color: rgb(101, 101, 101);
+}
+
+.requirements-section ul li {
+    margin-bottom: 0.5rem;
+}
+
+.submit-container {
+    background: white;
+    padding: 1rem;
+    border-radius: 4px;
+    margin-top: 2rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.submit-button:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+.file-info {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 1rem;
+    padding: 0.5rem;
+    background: #f8f9fa;
+    border-radius: 4px;
+}
+
+.file-info span {
+    color: #666;
+    font-size: 0.9rem;
+    margin-right: 1rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Hide scrollbar for cleaner look */
+.workload-modal::-webkit-scrollbar {
+    width: 8px;
+}
+
+.workload-modal::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+
+.workload-modal::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 4px;
+}
+
+.workload-modal::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}
