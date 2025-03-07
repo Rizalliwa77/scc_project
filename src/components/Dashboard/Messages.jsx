@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { db, auth } from '../../firebase';
 import { collection, query, where, onSnapshot, addDoc, serverTimestamp, orderBy, updateDoc, doc } from 'firebase/firestore';
-import Sidebar from '../SideBar/Sidebar';
+import Sidebar from '../SideBar/SideBar';
 import { createNewChat, sendMessage } from '../shared/MessageFunctions';
 import './Messages.css';
 
