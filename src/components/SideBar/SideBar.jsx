@@ -27,8 +27,8 @@ const Sidebar = () => {
           console.log("Firestore Data Retrieved:", data);
 
           // Extract the first object's data
-          const firstKey = Object.keys(data)[0]; // Gets the first key (e.g., "6HAL5ErMU7TaESyRQU83eV9MVvv1")
-          const userData = data[firstKey]; // Accesses { fullName: "Rizal Liwa", role: "student" }
+          const firstKey = Object.keys(data)[0]; 
+          const userData = data[firstKey]; 
 
           console.log("Extracted User Data:", userData);
 
@@ -83,7 +83,7 @@ const Sidebar = () => {
       <div className="sidebar">
         <div className="sidebar-header">
           <img src={logo} alt="SCC Logo" className="sidebar-logo" />
-          <h1>ST. CATHERINE'S<br />COLLEGE</h1>
+          <h1>Catherinian Taskboard</h1>
         </div>
 
         <div className="sidebar-menu">

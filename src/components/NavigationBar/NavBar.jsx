@@ -7,7 +7,7 @@ const NavBar = () => {
         <div className="nav-content">
           <div className="logo-section">
             <img src={SCCLogo} alt="SCC Logo" className="logo" />
-            <h1 className="title">ST. CATHERINE'S COLLEGE</h1>
+            <h1 className="title">ST. CATHERINE'S COLLEGE TASKBOARD</h1>
           </div>
           <ul className="nav-links">
             <li><a href="#">Home</a></li>

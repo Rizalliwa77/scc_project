@@ -9,35 +9,26 @@ const Teacher_Sidebar = () => {
     const navigate = useNavigate();
     const [showLogoutModal, setShowLogoutModal] = useState(false);
 
-    // Updated menu items without calendar and grades
     const menuItems = [
         {
             path: '/teacher/dashboard',
             icon: 'dashboard',
-            label: 'Dashboard',
+            label: 'DASHBOARD',
             notifications: 0
         },
         {
             path: '/teacher/workload',
             icon: 'assignment',
-            label: 'Workload',
+            label: 'WORKLOADS',
             notifications: 0
         },
         {
             path: '/teacher/messages',
             icon: 'message',
-            label: 'Messages',
+            label: 'MESSAGES',
             notifications: 0
         }
     ];
-
-    // Example teacher data
-    const teacherData = {
-        name: 'Ms. Santos',
-        department: 'TLE Department',
-        classes: ['Grade 10 - STA', 'Grade 10 - STB', 'Grade 9 - SVF'],
-        avatar: 'MS'  // Initials for avatar
-    };
 
     const handleLogoutClick = () => {
         setShowLogoutModal(true);
@@ -61,7 +52,7 @@ const Teacher_Sidebar = () => {
             <div className="sidebar">
                 <div className="sidebar-header">
                     <img src={logo} alt="School Logo" className="sidebar-logo" />
-                    <h1>Teacher Portal</h1>
+                    <h1>Catherinian Taskboard</h1>
                 </div>
 
                 <nav className="sidebar-menu">

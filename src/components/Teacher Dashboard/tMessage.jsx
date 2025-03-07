@@ -189,12 +189,6 @@ function TeacherMessages() {
                             >
                                 Personal Messages
                             </button>
-                            <button 
-                                className={`tab-button ${activeTab === 'announcements' ? 'active' : ''}`}
-                                onClick={() => setActiveTab('announcements')}
-                            >
-                                School Announcements
-                            </button>
                         </div>
                     </div>
                 </div>

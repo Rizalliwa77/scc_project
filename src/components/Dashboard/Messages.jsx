@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { db, auth } from '../../firebase';
 import { collection, query, where, onSnapshot, addDoc, serverTimestamp, orderBy, updateDoc, doc } from 'firebase/firestore';
-import Sidebar from '../SideBar/SideBar';
+import Sidebar from '../SideBar/Sidebar';
 import { createNewChat, sendMessage } from '../shared/MessageFunctions';
 import './Messages.css';
 
@@ -189,12 +189,6 @@ function Messages() {
                                 onClick={() => setActiveTab('personal')}
                             >
                                 Personal Messages
-                            </button>
-                            <button 
-                                className={`tab-button ${activeTab === 'announcements' ? 'active' : ''}`}
-                                onClick={() => setActiveTab('announcements')}
-                            >
-                                School Announcements
                             </button>
                         </div>
                     </div>
