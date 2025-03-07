@@ -70,11 +70,12 @@ function WorkloadModal({ onClose, onCreate, onUpdate, onDelete, workload, mode =
                 dueDate: new Date(formData.dueDate).toISOString(),
                 subject: 'Technical Livelihood Education',
                 teacherId: auth.currentUser.uid,
-                teacherEmail: auth.currentUser.email
+                teacherEmail: auth.currentUser.email,
+                type: formData.type.charAt(0).toUpperCase() + formData.type.slice(1)
             };
 
             if (mode === 'edit') {
-                const collectionRef = collection(db, formData.type === 'assignment' ? 'assignments' : 'projects');
+                const collectionRef = collection(db, formData.type.toLowerCase() + 's');
                 const docRef = doc(collectionRef, workload.id);
                 
                 const docSnap = await getDoc(docRef);
@@ -92,7 +93,7 @@ function WorkloadModal({ onClose, onCreate, onUpdate, onDelete, workload, mode =
                 formattedData.status = 'Active';
                 formattedData.submissions = [];
 
-                const collectionRef = collection(db, formData.type === 'assignment' ? 'assignments' : 'projects');
+                const collectionRef = collection(db, formData.type.toLowerCase() + 's');
                 const docRef = await addDoc(collectionRef, formattedData);
                 onCreate({ id: docRef.id, ...formattedData });
             }
