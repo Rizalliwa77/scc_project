@@ -43,8 +43,8 @@ const TeacherDashboard = () => {
         <div className="content-wrapper">
           <div className="header-section">
             <div className="header-title">
-              <h1>TLE Teacher Dashboard</h1>
-              <span className="subject-badge">Technical Livelihood Education</span>
+              <h1>Teacher Dashboard</h1>
+              <span className="subject-badge">High School Department</span>
             </div>
           </div>
 

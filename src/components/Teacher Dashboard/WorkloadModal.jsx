@@ -222,7 +222,6 @@ function WorkloadModal({ onClose, onCreate, onUpdate, onDelete, workload, mode =
                                 >
                                     <option value="assignment">Assignment</option>
                                     <option value="project">Project</option>
-                                    <option value="quiz">Quiz</option>
                                 </select>
                             </div>
                             <div className="form-group">
