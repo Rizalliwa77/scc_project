@@ -1,17 +1,18 @@
 // Create a shared utility file for common messaging functions
-import { collection, addDoc, serverTimestamp, doc, setDoc, orderBy, query, where, getDocs, updateDoc } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, doc, setDoc, orderBy, query, where, getDocs, updateDoc, getDoc } from 'firebase/firestore';
 import { db } from '../../firebase';
 
-export const createNewChat = async (sender, recipient) => {
+export const createNewChat = async (currentUser, recipient) => {
     try {
-        // Create new chat document with complete user details
-        const chatRef = await addDoc(collection(db, 'chats'), {
-            participants: [sender.uid, recipient.uid],
+        // Check if chat already exists
+        const chatsRef = collection(db, 'chats');
+        const chatData = {
+            participants: [currentUser.uid, recipient.uid],
             participantDetails: {
-                [sender.uid]: {
-                    fullName: sender.fullName,
-                    role: sender.role,
-                    email: sender.email,
+                [currentUser.uid]: {
+                    fullName: currentUser.fullName,
+                    role: currentUser.role,
+                    email: currentUser.email,
                     isOnline: true
                 },
                 [recipient.uid]: {
@@ -21,55 +22,58 @@ export const createNewChat = async (sender, recipient) => {
                     isOnline: false
                 }
             },
+            createdAt: serverTimestamp(),
             lastMessage: '',
-            lastMessageTime: serverTimestamp(),
-            createdAt: serverTimestamp()
+            lastMessageTime: serverTimestamp()
+        };
+
+        const chatDoc = await addDoc(chatsRef, chatData);
+        
+        // Create initial system message
+        await addDoc(collection(db, 'chats', chatDoc.id, 'messages'), {
+            content: 'Chat started',
+            senderId: 'system',
+            senderName: 'System',
+            timestamp: serverTimestamp()
         });
 
-        // Return the new chat data
         return {
-            id: chatRef.id,
-            participants: [sender.uid, recipient.uid],
-            participantDetails: {
-                [sender.uid]: {
-                    fullName: sender.fullName,
-                    role: sender.role,
-                    email: sender.email
-                },
-                [recipient.uid]: {
-                    fullName: recipient.fullName,
-                    role: recipient.role,
-                    email: recipient.email
-                }
-            },
-            lastMessage: '',
-            lastMessageTime: serverTimestamp(),
-            createdAt: serverTimestamp()
+            id: chatDoc.id,
+            ...chatData
         };
     } catch (error) {
-        console.error('Error creating new chat:', error);
+        console.error('Error creating chat:', error);
         throw error;
     }
 };
 
 export const sendMessage = async (chatId, sender, content) => {
     try {
+        const chatRef = doc(db, 'chats', chatId);
+        const chatDoc = await getDoc(chatRef);
+
+        if (!chatDoc.exists()) {
+            throw new Error('Chat does not exist');
+        }
+
         // Add message to subcollection
-        const messageRef = await addDoc(collection(db, 'chats', chatId, 'messages'), {
+        const messageData = {
             content,
             senderId: sender.uid,
             senderName: sender.fullName,
             senderRole: sender.role,
             timestamp: serverTimestamp()
-        });
+        };
+
+        await addDoc(collection(db, 'chats', chatId, 'messages'), messageData);
 
         // Update chat document with last message
-        await updateDoc(doc(db, 'chats', chatId), {
+        await updateDoc(chatRef, {
             lastMessage: content,
             lastMessageTime: serverTimestamp()
         });
 
-        return messageRef.id;
+        return true;
     } catch (error) {
         console.error('Error sending message:', error);
         throw error;
@@ -158,5 +162,17 @@ const handleSendMessage = async (e) => {
         setNewMessage('');
     } catch (error) {
         console.error('Error sending message:', error);
+    }
+};
+
+// Optional: Add online/offline status handling
+export const updateUserStatus = async (chatId, userId, isOnline) => {
+    try {
+        const chatRef = doc(db, 'chats', chatId);
+        await updateDoc(chatRef, {
+            [`participantDetails.${userId}.isOnline`]: isOnline
+        });
+    } catch (error) {
+        console.error('Error updating user status:', error);
     }
 }; 

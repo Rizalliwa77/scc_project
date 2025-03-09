@@ -4,6 +4,7 @@ import { collection, query, where, onSnapshot, addDoc, serverTimestamp, orderBy,
 import TeacherSidebar from '../SideBar/Teacher_Sidebar';
 import { createNewChat, sendMessage } from '../shared/MessageFunctions';
 import '../Dashboard/Messages.css';  // Use the same CSS file
+import { useNavigate, useParams } from 'react-router-dom';
 
 function TeacherMessages() {
     const [activeTab, setActiveTab] = useState('personal');
@@ -18,6 +19,8 @@ function TeacherMessages() {
     const [currentUserData, setCurrentUserData] = useState(null);
     const [filteredTeachers, setFilteredTeachers] = useState([]);
     const [filteredStudents, setFilteredStudents] = useState([]);
+    const navigate = useNavigate();
+    const { recipientId } = useParams();
 
     useEffect(() => {
         if (!auth.currentUser) return;

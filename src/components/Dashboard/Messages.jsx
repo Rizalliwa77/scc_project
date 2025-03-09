@@ -18,6 +18,7 @@ function Messages() {
     const [currentUserData, setCurrentUserData] = useState(null);
     const [filteredTeachers, setFilteredTeachers] = useState([]);
     const [filteredStudents, setFilteredStudents] = useState([]);
+    const [isLoading, setIsLoading] = useState(false);
 
     useEffect(() => {
         if (!auth.currentUser) return;
@@ -120,6 +121,14 @@ function Messages() {
         setFilteredStudents(filteredStudents);
     }, [searchQuery, availableTeachers, availableStudents]);
 
+    useEffect(() => {
+        console.log('Selected chat updated:', selectedChat);
+    }, [selectedChat]);
+
+    useEffect(() => {
+        console.log('Messages updated:', messages);
+    }, [messages]);
+
     const handleSendMessage = async (e) => {
         e.preventDefault();
         if (!newMessage.trim() || !selectedChat || !currentUserData) return;
@@ -127,7 +136,7 @@ function Messages() {
         try {
             await sendMessage(selectedChat.id, {
                 uid: auth.currentUser.uid,
-                fullName: currentUserData.fullName || 'Unknown User',
+                fullName: currentUserData.fullName,
                 role: currentUserData.role
             }, newMessage.trim());
             setNewMessage('');
@@ -137,33 +146,77 @@ function Messages() {
     };
 
     const startNewChat = async (recipient) => {
-        if (!currentUserData) return;
+        if (!currentUserData) {
+            console.error('No current user data');
+            return;
+        }
 
+        setIsLoading(true);
         try {
+            console.log('Starting chat with recipient:', recipient);
+            
+            // Check for existing chat first
             const existingChat = chats.find(chat => 
                 chat.participants.includes(recipient.uid)
             );
 
             if (existingChat) {
+                console.log('Found existing chat:', existingChat);
                 setSelectedChat(existingChat);
                 setShowNewMessageModal(false);
                 return;
             }
 
-            const newChat = await createNewChat(
-                {
-                    uid: auth.currentUser.uid,
-                    fullName: currentUserData.fullName,
-                    role: currentUserData.role,
-                    email: currentUserData.email
+            // Create new chat if none exists
+            const chatData = {
+                participants: [auth.currentUser.uid, recipient.uid],
+                participantDetails: {
+                    [auth.currentUser.uid]: {
+                        fullName: currentUserData.fullName,
+                        role: currentUserData.role,
+                        email: currentUserData.email,
+                        isOnline: true
+                    },
+                    [recipient.uid]: {
+                        fullName: recipient.fullName,
+                        role: recipient.role,
+                        email: recipient.email,
+                        isOnline: false
+                    }
                 },
-                recipient
-            );
+                createdAt: serverTimestamp(),
+                lastMessage: 'Chat started',
+                lastMessageTime: serverTimestamp()
+            };
 
+            // Add the chat to Firestore
+            const chatRef = await addDoc(collection(db, 'chats'), chatData);
+            const newChat = {
+                id: chatRef.id,
+                ...chatData
+            };
+
+            console.log('New chat created:', newChat);
+            
+            // Set the selected chat immediately
             setSelectedChat(newChat);
+            
+            // Close the modal
             setShowNewMessageModal(false);
+
+            // Add initial message
+            await addDoc(collection(db, 'chats', chatRef.id, 'messages'), {
+                content: 'Chat started',
+                senderId: 'system',
+                senderName: 'System',
+                timestamp: serverTimestamp()
+            });
+
         } catch (error) {
-            console.error('Error starting new chat:', error);
+            console.error('Error in startNewChat:', error);
+            alert('Failed to start chat. Please try again.');
+        } finally {
+            setIsLoading(false);
         }
     };
 
@@ -233,16 +286,20 @@ function Messages() {
                         </div>
                         {selectedChat && (
                             <div className="chat-window">
-                                <div className="chat-header">
-                                    <div className="recipient-info">
-                                        <h2>{getRecipientDetails(selectedChat)?.fullName}</h2>
-                                        <div className="recipient-status">
-                                            <span className={`status-indicator ${getRecipientDetails(selectedChat)?.isOnline ? 'online' : 'offline'}`} />
-                                            <p>{getRecipientDetails(selectedChat)?.isOnline ? 'Online' : 'Offline'}</p>
+                                {isLoading ? (
+                                    <div className="loading-indicator">Loading...</div>
+                                ) : (
+                                    <div className="chat-header">
+                                        <div className="recipient-info">
+                                            <h2>{getRecipientDetails(selectedChat)?.fullName}</h2>
+                                            <div className="recipient-status">
+                                                <span className={`status-indicator ${getRecipientDetails(selectedChat)?.isOnline ? 'online' : 'offline'}`} />
+                                                <p>{getRecipientDetails(selectedChat)?.isOnline ? 'Online' : 'Offline'}</p>
+                                            </div>
+                                            <p className="role">{getRecipientDetails(selectedChat)?.role}</p>
                                         </div>
-                                        <p className="role">{getRecipientDetails(selectedChat)?.role}</p>
                                     </div>
-                                </div>
+                                )}
                                 <div className="messages-list">
                                     {messages.map(message => (
                                         <div 
@@ -308,7 +365,13 @@ function Messages() {
                                             <div
                                                 key={teacher.uid}
                                                 className="contact-item"
-                                                onClick={() => startNewChat(teacher)}
+                                                onClick={async () => {
+                                                    try {
+                                                        await startNewChat(teacher);
+                                                    } catch (error) {
+                                                        console.error('Error starting chat:', error);
+                                                    }
+                                                }}
                                             >
                                                 <div className="contact-header">
                                                     <h4>{teacher.fullName}</h4>

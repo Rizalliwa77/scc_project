@@ -53,6 +53,7 @@ const Teacher_Sidebar = () => {
                 <div className="sidebar-header">
                     <img src={logo} alt="School Logo" className="sidebar-logo" />
                     <h1>Catherinian Taskboard</h1>
+                    <p>- Teacher -</p>
                 </div>
 
                 <nav className="sidebar-menu">

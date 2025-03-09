@@ -31,13 +31,9 @@
 }
 
 .messages-container {
-    background: white;
-    border-radius: 16px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-    margin-top: 1rem;
-    height: calc(100vh - 180px);
-    overflow: hidden;
     display: flex;
+    height: calc(100vh - 100px); /* Adjust based on your header height */
+    background: white;
 }
 
 .message-tabs {
@@ -70,14 +66,14 @@
 
 .personal-messages {
     display: flex;
-    height: 100%;
+    width: 100%;
 }
 
 .chats-list {
-    width: 360px;
-    background: white;
+    width: 300px;
     border-right: 1px solid #eee;
     overflow-y: auto;
+    flex-shrink: 0;
 }
 
 .new-message-button button {
@@ -106,15 +102,21 @@
 }
 
 .chat-item {
-    padding: 1rem;
+    padding: 15px;
+    margin: 5px;
+    border-radius: 8px;
     cursor: pointer;
-    border-bottom: 1px solid #f0f0f0;
-    transition: all 0.2s ease;
+    transition: background-color 0.2s;
+    background-color: #f8f9fa;
 }
 
 .chat-item:hover {
-    background: #f8f9fa;
-    transform: translateX(4px);
+    background-color: #e9ecef;
+}
+
+.chat-item:active {
+    background-color: #e5e5e5;
+    transform: translateY(0);
 }
 
 .chat-item.active {
@@ -155,7 +157,7 @@
     flex: 1;
     display: flex;
     flex-direction: column;
-    background: #fff;
+    min-width: 0;
 }
 
 .chat-header {
@@ -197,9 +199,8 @@
 
 .messages-list {
     flex: 1;
-    padding: 1.5rem;
     overflow-y: auto;
-    background: #f8f9fa;
+    padding: 20px;
 }
 
 .message {
@@ -249,21 +250,18 @@
 }
 
 .message-input {
-    padding: 1rem;
-    background: white;
-    border-top: 1px solid #eee;
     display: flex;
-    gap: 12px;
-    align-items: center;
+    padding: 15px;
+    border-top: 1px solid #eee;
+    background: white;
 }
 
 .message-input input {
     flex: 1;
-    padding: 0.8rem 1rem;
-    border: 1px solid #e0e0e0;
-    border-radius: 24px;
-    font-size: 0.95rem;
-    transition: all 0.2s;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    margin-right: 10px;
 }
 
 .message-input input:focus {
@@ -381,13 +379,21 @@
 }
 
 .contact-item {
-    padding: 12px 24px;
+    padding: 15px;
+    margin: 5px;
+    border-radius: 8px;
     cursor: pointer;
-    transition: background-color 0.2s ease;
+    transition: background-color 0.2s;
+    background-color: #f8f9fa;
 }
 
 .contact-item:hover {
-    background-color: #f8f9fa;
+    background-color: #e9ecef;
+}
+
+.contact-item:active {
+    background-color: #e5e5e5;
+    transform: translateY(0);
 }
 
 .contact-header h4 {
