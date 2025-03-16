@@ -261,3 +261,59 @@ select:disabled {
     background-color: #ccc;
     cursor: not-allowed;
 }
+
+.security-setup-button {
+    width: 100%;
+    padding: 8px 12px;
+    background-color: #f8f8f8;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: all 0.3s ease;
+    height: 38px; /* Match the height of other inputs */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.security-setup-button.completed {
+    background-color: #e0f2e9;
+    color: #1a7f37;
+    border-color: #1a7f37;
+}
+
+.security-setup-button:hover {
+    background-color: #f0f0f0;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.security-setup-button.completed:hover {
+    background-color: #d0e8d8;
+}
+
+.password-match-indicator {
+    font-size: 0.8rem;
+    margin-top: 4px;
+    text-align: right;
+}
+
+.password-match-indicator.match {
+    color: #1a7f37;
+}
+
+.password-match-indicator.no-match {
+    color: #cf222e;
+}
+
+.password-input-group {
+    position: relative;
+    width: 100%;
+}
+
+.password-input-group .password-match-indicator {
+    position: absolute;
+    right: 0;
+    top: 100%;
+}

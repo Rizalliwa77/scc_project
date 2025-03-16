@@ -6,6 +6,20 @@ import { auth, db } from '../../../firebase';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { doc, setDoc } from 'firebase/firestore';
 import backgroundImage from '../../../assets/media/raw page.png';
+import SecurityQuestionsModal from './SecurityQuestionsModal';
+
+const SECURITY_QUESTIONS = [
+    "What was the name of your first pet?",
+    "In which city were you born?",
+    "What was your childhood nickname?",
+    "What is your mother's maiden name?",
+    "What was the name of your elementary school?",
+    "What was your favorite subject in high school?",
+    "What is the name of the street you grew up on?",
+    "What is your favorite book from childhood?",
+    "What was the make of your first car?",
+    "What is your father's middle name?"
+];
 
 function SignIn() {
     const [formData, setFormData] = useState({
@@ -18,13 +32,19 @@ function SignIn() {
         section: '',
         idNumber: '',
         userType: 'student',
-        subject: ''
+        subject: '',
+        securityQuestion1: '',
+        securityAnswer1: '',
+        securityQuestion2: '',
+        securityAnswer2: ''
     });
     const [showPopup, setShowPopup] = useState(false);
     const [sections, setSections] = useState([]);
     const navigate = useNavigate();
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
+    const [securityQuestionsSet, setSecurityQuestionsSet] = useState(false);
+    const [showSecurityModal, setShowSecurityModal] = useState(false);
 
     const gradeSections = {
         '7': ['STS', 'SRL', 'SAM'],
@@ -61,6 +81,21 @@ function SignIn() {
                 [name]: value
             }));
         }
+    };
+
+    const handleSecuritySubmit = (e) => {
+        e.preventDefault();
+        if (formData.securityQuestion1 === formData.securityQuestion2) {
+            setError("Please select two different security questions");
+            return;
+        }
+        if (!formData.securityAnswer1.trim() || !formData.securityAnswer2.trim()) {
+            setError("Please provide answers for both security questions");
+            return;
+        }
+        setSecurityQuestionsSet(true);
+        setShowSecurityModal(false);
+        setError('');
     };
 
     const validateForm = () => {
@@ -106,6 +141,11 @@ function SignIn() {
             return false;
         }
 
+        if (!securityQuestionsSet) {
+            setError("Please set up your security questions");
+            return false;
+        }
+
         return true;
     };
 
@@ -136,7 +176,13 @@ function SignIn() {
                     idNumber: formData.idNumber,
                     role: formData.userType,
                     status: 'pending',
-                    createdAt: new Date().toISOString()
+                    createdAt: new Date().toISOString(),
+                    securityQuestions: {
+                        question1: formData.securityQuestion1,
+                        answer1: formData.securityAnswer1.toLowerCase().trim(),
+                        question2: formData.securityQuestion2,
+                        answer2: formData.securityAnswer2.toLowerCase().trim()
+                    }
                 }
             }, { merge: true });
 
@@ -182,6 +228,16 @@ function SignIn() {
 
     const handleHome = () => {
         navigate('/');
+    };
+
+    const getPasswordMatchIndicator = () => {
+        if (!formData.password || !formData.confirmPassword) return null;
+        const matches = formData.password === formData.confirmPassword;
+        return (
+            <span className={`password-match-indicator ${matches ? 'match' : 'no-match'}`}>
+                {matches ? '✓ Passwords Match' : '✗ Passwords Do Not Match'}
+            </span>
+        );
     };
 
     return (
@@ -242,26 +298,31 @@ function SignIn() {
                         </div>
                         <div className="form-row">
                             <div className="form-group">
-                                <input 
-                                    type="password" 
-                                    placeholder="Password" 
-                                    className="signin-input" 
-                                    name="password"
-                                    value={formData.password}
-                                    onChange={handleInputChange}
-                                    required 
-                                />
+                                <div className="password-input-group">
+                                    <input 
+                                        type="password" 
+                                        placeholder="Password" 
+                                        className="signin-input" 
+                                        name="password"
+                                        value={formData.password}
+                                        onChange={handleInputChange}
+                                        required 
+                                    />
+                                </div>
                             </div>
                             <div className="form-group">
-                                <input 
-                                    type="password" 
-                                    placeholder="Confirm Password" 
-                                    className="signin-input" 
-                                    name="confirmPassword"
-                                    value={formData.confirmPassword}
-                                    onChange={handleInputChange}
-                                    required 
-                                />
+                                <div className="password-input-group">
+                                    <input 
+                                        type="password" 
+                                        placeholder="Confirm Password" 
+                                        className="signin-input" 
+                                        name="confirmPassword"
+                                        value={formData.confirmPassword}
+                                        onChange={handleInputChange}
+                                        required 
+                                    />
+                                    {getPasswordMatchIndicator()}
+                                </div>
                             </div>
                         </div>
                         <div className="form-row">
@@ -330,6 +391,28 @@ function SignIn() {
                                         ))}
                                     </select>
                                 </div>
+                                <div className="form-group">
+                                    <button
+                                        type="button"
+                                        className={`security-setup-button ${securityQuestionsSet ? 'completed' : ''}`}
+                                        onClick={() => setShowSecurityModal(true)}
+                                    >
+                                        {securityQuestionsSet ? '✓ Security Questions Set' : 'Set Security Questions'}
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+                        {formData.userType === 'teacher' && (
+                            <div className="form-row">
+                                <div className="form-group">
+                                    <button
+                                        type="button"
+                                        className={`security-setup-button ${securityQuestionsSet ? 'completed' : ''}`}
+                                        onClick={() => setShowSecurityModal(true)}
+                                    >
+                                        {securityQuestionsSet ? '✓ Security Questions Set' : 'Set Security Questions'}
+                                    </button>
+                                </div>
                             </div>
                         )}
                         {error && <p className="error-message">{error}</p>}
@@ -368,6 +451,15 @@ function SignIn() {
                     </div>
                 </div>
             )}
+
+            <SecurityQuestionsModal
+                isOpen={showSecurityModal}
+                onClose={() => setShowSecurityModal(false)}
+                securityData={formData}
+                onSecurityDataChange={handleInputChange}
+                onSubmit={handleSecuritySubmit}
+                SECURITY_QUESTIONS={SECURITY_QUESTIONS}
+            />
         </div>
     );
 }

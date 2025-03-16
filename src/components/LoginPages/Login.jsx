@@ -6,12 +6,14 @@ import { doc, getDoc, setDoc, collection } from 'firebase/firestore';
 import NavBar from '../NavigationBar/NavBar';
 import "./Login.css";
 import logo from '../../assets/media/SCC.png';
+import ForgotPasswordModal from './ForgotPasswordModal';
 
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
   const role = location.state?.role;
@@ -155,7 +157,14 @@ const Login = () => {
                 disabled={loading}
                 required
               />
-              <a href="#" className="login-forgot">
+              <a 
+                href="#" 
+                className="login-forgot"
+                onClick={(e) => {
+                  e.preventDefault();
+                  setIsModalOpen(true);
+                }}
+              >
                 Forgot your password?
               </a>
               <button 
@@ -185,6 +194,11 @@ const Login = () => {
           </div>
         </div>
       </div>
+      
+      <ForgotPasswordModal 
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+      />
     </div>
   );
 };
