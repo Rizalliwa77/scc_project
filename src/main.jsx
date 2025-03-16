@@ -7,6 +7,7 @@ import LandingPage from './components/LandingPages/LandingPage.jsx';
 import SignIn from './components/LoginPages/SignIn/SignIn.jsx';
 import Login from './components/LoginPages/Login.jsx';
 import PreLogin from './components/LoginPages/PreLogin.jsx';
+import AboutUs from './components/LandingPages/AboutUs.jsx';
 
 // Student Dashboard Components
 import Dashboard from './components/Dashboard/Dashboard.jsx';
@@ -43,6 +44,7 @@ function Main() {
         <Route path="/signin" element={<SignIn />} />
         <Route path="/login" element={<Login />} />
         <Route path="/prelogin" element={<PreLogin />} />
+        <Route path="/about" element={<AboutUs />} />
 
         {/* Student Protected routes */}
         <Route path="/dashboard" element={

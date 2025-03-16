@@ -326,6 +326,8 @@ function Messages() {
                                 <form className="message-input" onSubmit={handleSendMessage}>
                                     <input
                                         type="text"
+                                        name="messageInput"
+                                        id="messageInput"
                                         placeholder="Type a message..."
                                         value={newMessage}
                                         onChange={(e) => setNewMessage(e.target.value)}
