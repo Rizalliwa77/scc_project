@@ -94,35 +94,12 @@ const ForgotPasswordModal = ({ isOpen, onClose }) => {
         }
     };
 
-    const validatePassword = (password) => {
-        const minLength = 8;
-        const hasUpperCase = /[A-Z]/.test(password);
-        const hasLowerCase = /[a-z]/.test(password);
-        const hasNumbers = /\d/.test(password);
-        const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(password);
-
-        if (password.length < minLength) return "Password must be at least 8 characters long";
-        if (!hasUpperCase) return "Password must contain at least one uppercase letter";
-        if (!hasLowerCase) return "Password must contain at least one lowercase letter";
-        if (!hasNumbers) return "Password must contain at least one number";
-        if (!hasSpecialChar) return "Password must contain at least one special character";
-        return null;
-    };
-
     const handlePasswordChange = async (e) => {
         e.preventDefault();
         setLoading(true);
         setStatus({ type: '', message: '' });
 
         try {
-            // Validate new password
-            const passwordError = validatePassword(formData.newPassword);
-            if (passwordError) {
-                setStatus({ type: 'error', message: passwordError });
-                setLoading(false);
-                return;
-            }
-
             if (formData.newPassword !== formData.confirmPassword) {
                 setStatus({ type: 'error', message: 'Passwords do not match' });
                 setLoading(false);
@@ -130,18 +107,14 @@ const ForgotPasswordModal = ({ isOpen, onClose }) => {
             }
 
             // Update password in Firebase Auth
-            await signInWithEmailAndPassword(auth, formData.email, userData.password);
             await updatePassword(auth.currentUser, formData.newPassword);
 
-            // Update password in Firestore
-            const signInRef = doc(db, 'sign-in', 'PEQz5kwuehQldRsByTrA');
-            await updateDoc(signInRef, {
-                [`${userData.userId}.password`]: formData.newPassword
-            });
+            // Sign out after password update
+            await auth.signOut();
 
             setStatus({
                 type: 'success',
-                message: 'Password successfully updated!'
+                message: 'Password successfully updated! You can now login with your new password.'
             });
 
             setTimeout(() => {
@@ -151,7 +124,10 @@ const ForgotPasswordModal = ({ isOpen, onClose }) => {
 
         } catch (error) {
             console.error('Error:', error);
-            setStatus({ type: 'error', message: 'Failed to update password. Please try again.' });
+            setStatus({ 
+                type: 'error', 
+                message: 'Failed to update password. Please try again.' 
+            });
         } finally {
             setLoading(false);
         }
@@ -254,22 +230,12 @@ const ForgotPasswordModal = ({ isOpen, onClose }) => {
                             />
                             {getPasswordMatchIndicator()}
                         </div>
-                        <div className="password-requirements">
-                            <p>Password must contain:</p>
-                            <ul>
-                                <li>At least 8 characters</li>
-                                <li>One uppercase letter</li>
-                                <li>One lowercase letter</li>
-                                <li>One number</li>
-                                <li>One special character</li>
-                            </ul>
-                        </div>
                         <button 
                             type="submit" 
                             className="modal-button"
-                            disabled={loading}
+                            disabled={loading || formData.newPassword !== formData.confirmPassword}
                         >
-                            {loading ? "Updating..." : "Update Password"}
+                            {loading ? "Updating Password..." : "Update Password"}
                         </button>
                     </form>
                 )}
