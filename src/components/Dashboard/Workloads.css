@@ -338,18 +338,35 @@
 }
 
 .submit-button {
-    margin-top: 1rem;
     background: #1a237e;
     color: white;
     border: none;
-    padding: 0.5rem 1rem;
-    border-radius: 4px;
+    padding: 0.8rem 1.5rem;
+    border-radius: 8px;
     cursor: pointer;
-    text-transform: none;
+    font-size: 1rem;
+    transition: all 0.3s ease;
 }
 
-.submit-button:hover {
+.submit-button.completed {
+    background: #4caf50;
+    cursor: default;
+}
+
+.submit-button:hover:not(.completed) {
     background: #0d1757;
+}
+
+.submitted-info {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    align-items: flex-start;
+}
+
+.submitted-info p {
+    color: #666;
+    font-size: 0.9rem;
 }
 
 /* Add any additional styles as needed */

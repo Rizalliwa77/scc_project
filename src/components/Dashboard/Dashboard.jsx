@@ -1,13 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { db } from '../../firebase';
-import { collection, getDocs } from 'firebase/firestore';
+import { collection, getDocs, getDoc, doc } from 'firebase/firestore';
 import './Dashboard.css';
 import Sidebar from '../SideBar/SideBar';
+import { auth } from '../../firebase';
 
 function Dashboard() {
     const [workloads, setWorkloads] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [userGrade, setUserGrade] = useState('');
+    const [userSection, setUserSection] = useState('');
 
     // Add new state for subjects
     const [subjects] = useState([
@@ -24,6 +27,22 @@ function Dashboard() {
 
     useEffect(() => {
         fetchWorkloads();
+        const fetchUserData = async () => {
+            if (auth.currentUser) {
+                try {
+                    const userDoc = await getDoc(doc(db, 'users', auth.currentUser.uid));
+                    if (userDoc.exists()) {
+                        const userData = userDoc.data();
+                        setUserGrade(userData.grade);
+                        setUserSection(userData.section);
+                    }
+                } catch (error) {
+                    console.error("Error fetching user data:", error);
+                }
+            }
+        };
+
+        fetchUserData();
     }, []);
 
     const fetchWorkloads = async () => {
@@ -72,10 +91,9 @@ function Dashboard() {
                 <div className="dashboard-header">
                     <div className="header-left">
                         <h1>Student Dashboard</h1>
-                        <span className="semester-info">1st Semester AY 2023-2024</span>
                     </div>
                     <div className="section-dropdown">
-                        Grade 10 - STA
+                        {userGrade && userSection ? `${userGrade} - ${userSection}` : 'Loading...'}
                     </div>
                 </div>
 

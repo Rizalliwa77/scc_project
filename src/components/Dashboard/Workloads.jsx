@@ -106,49 +106,13 @@ function Workloads() {
     };
 
     const handleSubmit = async (workloadId) => {
-        if (!file) {
-            alert('Please select a file to upload.');
-            return;
-        }
-
-        setUploading(true);
-
         try {
-            // Simple filename with timestamp
-            const timestamp = new Date().getTime();
-            const fileName = `${timestamp}_${file.name}`;
-
-            console.log('Attempting to upload file:', fileName);
-
-            // Simple upload
-            const { data, error: uploadError } = await supabase.storage
-                .from('workload-submissions')
-                .upload(fileName, file);
-
-            if (uploadError) {
-                console.error('Upload error details:', uploadError);
-                throw uploadError;
-            }
-
-            console.log('File uploaded successfully:', data);
-
-            // Get the URL
-            const { data: { publicUrl } } = supabase.storage
-                .from('workload-submissions')
-                .getPublicUrl(fileName);
-
-            console.log('Generated public URL:', publicUrl);
-
-            // Create submission data
             const submissionData = {
                 workloadId,
                 studentId: auth.currentUser?.uid || 'anonymous',
                 studentEmail: auth.currentUser?.email || 'anonymous',
-                fileName: file.name,
-                fileUrl: publicUrl,
-                filePath: fileName,
                 submittedAt: new Date().toISOString(),
-                status: 'Submitted'
+                status: 'Completed'
             };
 
             // Save to Firestore
@@ -161,23 +125,17 @@ function Workloads() {
             const existingSubmissions = await getDocs(q);
 
             if (!existingSubmissions.empty) {
-                console.log('Updating existing submission');
                 await updateDoc(existingSubmissions.docs[0].ref, submissionData);
             } else {
-                console.log('Creating new submission');
                 await addDoc(submissionsRef, submissionData);
             }
 
             await fetchSubmissions();
-            alert('Workload submitted successfully!');
             setSelectedWorkload(null);
-            setFile(null);
 
         } catch (error) {
-            console.error("Error submitting workload:", error);
-            alert('Failed to submit workload. Please try again.');
-        } finally {
-            setUploading(false);
+            console.error("Error marking as completed:", error);
+            alert('Failed to mark as completed. Please try again.');
         }
     };
 
@@ -306,50 +264,21 @@ function Workloads() {
                     <div className="submission-status">
                         {submission ? (
                             <div className="submitted-info">
-                                <p>Submitted on: {new Date(submission.submittedAt).toLocaleString()}</p>
-                                <div className="file-actions">
-                                    <span>{submission.fileName}</span>
-                                    <button 
-                                        onClick={() => handleDownload(submission.fileUrl, submission.fileName)}
-                                        className="download-button"
-                                    >
-                                        Download
-                                    </button>
-                                    <button 
-                                        onClick={() => handleSubmit(workload.id)}
-                                        className="resubmit-button"
-                                    >
-                                        Resubmit
-                                    </button>
-                                </div>
+                                <p>Completed on: {new Date(submission.submittedAt).toLocaleString()}</p>
+                                <button 
+                                    className="submit-button completed"
+                                    disabled={true}
+                                >
+                                    Completed
+                                </button>
                             </div>
                         ) : (
-                            <div className="submit-container">
-                                <input
-                                    type="file"
-                                    onChange={handleFileChange}
-                                    style={{ display: 'none' }}
-                                    id="file-upload"
-                                />
-                                <label 
-                                    htmlFor="file-upload" 
-                                    className="submit-button"
-                                >
-                                    Submit work
-                                </label>
-                                {file && (
-                                    <div className="file-info">
-                                        <span>{file.name}</span>
-                                        <button 
-                                            onClick={() => handleSubmit(workload.id)}
-                                            className="submit-button"
-                                            disabled={uploading}
-                                        >
-                                            {uploading ? 'Submitting...' : 'Confirm submit'}
-                                        </button>
-                                    </div>
-                                )}
-                            </div>
+                            <button 
+                                onClick={() => handleSubmit(workload.id)}
+                                className="submit-button"
+                            >
+                                Complete
+                            </button>
                         )}
                     </div>
                 </div>
@@ -380,17 +309,6 @@ function Workloads() {
                 <div className="workload-header">
                     <h1>Workloads</h1>
                     <div className="header-controls">
-                        <select
-                            value={selectedClass}
-                            onChange={(e) => setSelectedClass(e.target.value)}
-                            className="class-filter"
-                        >
-                            <option value="all">All Classes</option>
-                            <option value="Grade 10 - STA">Grade 10 - STA</option>
-                            <option value="Grade 10 - STB">Grade 10 - STB</option>
-                            <option value="Grade 9 - SVF">Grade 9 - SVF</option>
-                            <option value="Grade 9 - SHP">Grade 9 - SHP</option>
-                        </select>
                         <button onClick={fetchWorkloads} className="refresh-button">
                             <span className="material-symbols-outlined">refresh</span>
                         </button>
