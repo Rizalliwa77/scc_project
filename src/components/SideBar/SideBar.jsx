@@ -102,13 +102,6 @@ const Sidebar = () => {
             <span className="material-symbols-outlined">assignment</span>
             WORKLOADS
           </Link>
-          <Link 
-            to="/messages" 
-            className={`menu-item ${location.pathname === '/messages' ? 'active' : ''}`}
-          >
-            <span className="material-symbols-outlined">chat</span>
-            MESSAGES
-          </Link>
         </div>
 
         <div className="sidebar-footer">

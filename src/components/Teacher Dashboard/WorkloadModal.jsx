@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { db, auth } from '../../firebase';
 import { collection, addDoc, doc, updateDoc, deleteDoc, getDoc } from 'firebase/firestore';
 import './WorkloadModal.css';
@@ -38,6 +38,25 @@ function WorkloadModal({ onClose, onCreate, onUpdate, onDelete, workload, mode =
         'Grade 7 - SRL',
         'Grade 7 - SAM'
     ];
+
+    // Add sections mapping
+    const gradeSections = {
+        'Grade 7': ['STS', 'SRL', 'SAM'],
+        'Grade 8': ['SLR', 'SPEV'],
+        'Grade 9': ['SVP', 'SHP'],
+        'Grade 10': ['SJH', 'STA']
+    };
+
+    // Add state for grade and section
+    const [selectedGrade, setSelectedGrade] = useState(mode === 'edit' ? workload?.grade : '');
+    const [availableSections, setAvailableSections] = useState([]);
+
+    // Update sections when grade changes
+    useEffect(() => {
+        if (selectedGrade) {
+            setAvailableSections(gradeSections[selectedGrade] || []);
+        }
+    }, [selectedGrade]);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -210,6 +229,39 @@ function WorkloadModal({ onClose, onCreate, onUpdate, onDelete, workload, mode =
                                 disabled={isSubmitting}
                                 placeholder="Enter workload title"
                             />
+                        </div>
+                        <div className="form-row">
+                            <div className="form-group">
+                                <label>Grade Level</label>
+                                <select
+                                    value={selectedGrade}
+                                    onChange={(e) => {
+                                        setSelectedGrade(e.target.value);
+                                        setFormData({...formData, grade: e.target.value, section: ''});
+                                    }}
+                                    required
+                                    disabled={isSubmitting}
+                                >
+                                    <option value="">Select Grade</option>
+                                    {Object.keys(gradeSections).map(grade => (
+                                        <option key={grade} value={grade}>{grade}</option>
+                                    ))}
+                                </select>
+                            </div>
+                            <div className="form-group">
+                                <label>Section</label>
+                                <select
+                                    value={formData.section}
+                                    onChange={(e) => setFormData({...formData, section: e.target.value})}
+                                    required
+                                    disabled={!selectedGrade || isSubmitting}
+                                >
+                                    <option value="">Select Section</option>
+                                    {availableSections.map(section => (
+                                        <option key={section} value={section}>{section}</option>
+                                    ))}
+                                </select>
+                            </div>
                         </div>
                         <div className="form-row">
                             <div className="form-group">

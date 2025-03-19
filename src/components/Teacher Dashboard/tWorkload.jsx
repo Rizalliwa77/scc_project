@@ -203,9 +203,14 @@ function TeacherWorkload() {
                             >
                                 <option value="All">All</option>
                                 <option value="Grade 10 - STA">Grade 10 - STA</option>
-                                <option value="Grade 10 - STB">Grade 10 - STB</option>
-                                <option value="Grade 9 - SVF">Grade 9 - SVF</option>
+                                <option value="Grade 10 - SJH">Grade 10 - SJH</option>
+                                <option value="Grade 9 - SVP">Grade 9 - SVP</option>
                                 <option value="Grade 9 - SHP">Grade 9 - SHP</option>
+                                <option value="Grade 8 - SLR">Grade 8 - SLR</option>
+                                <option value="Grade 8 - SPEV">Grade 8 - SPEV</option>
+                                <option value="Grade 7 - STS">Grade 7 - STS</option>
+                                <option value="Grade 7 - SRL">Grade 7 - SRL</option>
+                                <option value="Grade 7 - SAM">Grade 7 - SAM</option>
                             </select>
                         </div>
                         <button 

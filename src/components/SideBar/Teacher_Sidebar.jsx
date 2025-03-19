@@ -21,12 +21,6 @@ const Teacher_Sidebar = () => {
             icon: 'assignment',
             label: 'WORKLOADS',
             notifications: 0
-        },
-        {
-            path: '/teacher/messages',
-            icon: 'message',
-            label: 'MESSAGES',
-            notifications: 0
         }
     ];
 

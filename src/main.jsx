@@ -12,12 +12,10 @@ import AboutUs from './components/LandingPages/AboutUs.jsx';
 // Student Dashboard Components
 import Dashboard from './components/Dashboard/Dashboard.jsx';
 import Workloads from './components/Dashboard/Workloads.jsx';
-import Messages from './components/Dashboard/Messages.jsx';
 
 // Teacher Dashboard Components
 import TeacherDashboard from './components/Teacher Dashboard/tDashboard.jsx';
 import TeacherWorkload from './components/Teacher Dashboard/tWorkload.jsx';
-import TeacherMessages from './components/Teacher Dashboard/tMessage.jsx';
 
 // Protected Route wrapper component
 const ProtectedRoute = ({ children, allowedRole }) => {
@@ -57,11 +55,6 @@ function Main() {
             <Workloads />
           </ProtectedRoute>
         } />
-        <Route path="/messages" element={
-          <ProtectedRoute allowedRole="student">
-            <Messages />
-          </ProtectedRoute>
-        } />
 
         {/* Teacher Protected routes */}
         <Route path="/teacher/dashboard" element={
@@ -74,11 +67,7 @@ function Main() {
             <TeacherWorkload />
           </ProtectedRoute>
         } />
-        <Route path="/teacher/messages" element={
-          <ProtectedRoute allowedRole="teacher">
-            <TeacherMessages />
-          </ProtectedRoute>
-        } />
+        
         {/* Catch all route - redirect based on role */}
         <Route path="*" element={
           <ProtectedRoute>

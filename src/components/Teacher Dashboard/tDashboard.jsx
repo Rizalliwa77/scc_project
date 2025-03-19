@@ -9,6 +9,7 @@ const TeacherDashboard = () => {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [activeTasks, setActiveTasks] = useState({});
 
   // Updated sections for each grade
   const gradesSections = {
@@ -16,6 +17,42 @@ const TeacherDashboard = () => {
     8: ['SLR', 'SPEV'],
     9: ['SVP', 'SHP'],
     10: ['SJH', 'STA']
+  };
+
+  useEffect(() => {
+    fetchActiveTasks();
+  }, []);
+
+  const fetchActiveTasks = async () => {
+    try {
+      // Fetch assignments
+      const assignmentsSnapshot = await getDocs(collection(db, 'assignments'));
+      const projectsSnapshot = await getDocs(collection(db, 'projects'));
+
+      const taskCounts = {};
+
+      // Count active assignments
+      assignmentsSnapshot.docs.forEach(doc => {
+        const data = doc.data();
+        if (data.status === 'Active') {
+          const key = `${data.grade}-${data.section}`;
+          taskCounts[key] = (taskCounts[key] || 0) + 1;
+        }
+      });
+
+      // Count active projects
+      projectsSnapshot.docs.forEach(doc => {
+        const data = doc.data();
+        if (data.status === 'Active') {
+          const key = `${data.grade}-${data.section}`;
+          taskCounts[key] = (taskCounts[key] || 0) + 1;
+        }
+      });
+
+      setActiveTasks(taskCounts);
+    } catch (error) {
+      console.error("Error fetching active tasks:", error);
+    }
   };
 
   const handleCreateWorkload = async (workloadData) => {
@@ -36,6 +73,32 @@ const TeacherDashboard = () => {
     }
   };
 
+  const renderSectionCard = (grade, section) => {
+    const taskCount = activeTasks[`Grade ${grade}-${section}`] || 0;
+    const progressWidth = taskCount > 0 ? '100%' : '0%';
+
+    return (
+      <div key={`${grade}-${section}`} className="section-card">
+        <div className="section-header">
+          <h4>{section}</h4>
+          <span className="grade-label">G{grade}</span>
+        </div>
+        <div className="section-stats">
+          <div className="stat">
+            <span className="stat-label">Active Tasks</span>
+            <span className="stat-value">{taskCount}</span>
+          </div>
+          <div className="progress-bar">
+            <div 
+              className="progress" 
+              style={{width: progressWidth}}
+            ></div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="dashboard-container">
       <TeacherSidebar />
@@ -54,23 +117,7 @@ const TeacherDashboard = () => {
                 <div key={grade} className="grade-card">
                   <h3>Grade {grade}</h3>
                   <div className="sections-grid">
-                    {sections.map((section) => (
-                      <div key={`${grade}-${section}`} className="section-card">
-                        <div className="section-header">
-                          <h4>{section}</h4>
-                          <span className="grade-label">G{grade}</span>
-                        </div>
-                        <div className="section-stats">
-                          <div className="stat">
-                            <span className="stat-label">Active Tasks</span>
-                            <span className="stat-value">0</span>
-                          </div>
-                          <div className="progress-bar">
-                            <div className="progress" style={{width: '0%'}}></div>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
+                    {sections.map(section => renderSectionCard(grade, section))}
                   </div>
                 </div>
               ))}
